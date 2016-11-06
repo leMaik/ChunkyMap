@@ -19,10 +19,26 @@
 
 package com.wertarbyte.renderservice.dynmapplugin;
 
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.logging.Level;
 
 /**
  * The main class.
  */
-public class Plugin extends JavaPlugin {
+public class RsDynmapPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
+        try (InputStream mapIcon = getResource("rs-map-icon.png")) {
+            Files.copy(mapIcon, Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_rs.png"));
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Could not write rs map icon", e);
+        }
+    }
 }
