@@ -1,6 +1,7 @@
 package com.wertarbyte.renderservice.dynmapplugin.dynmap;
 
 import com.wertarbyte.renderservice.dynmapplugin.rendering.ApiClient;
+import com.wertarbyte.renderservice.dynmapplugin.rendering.FileBufferContext;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.RenderJob;
 import org.bukkit.Bukkit;
 import org.dynmap.*;
@@ -11,18 +12,13 @@ import org.dynmap.markers.impl.MarkerAPIImpl;
 import org.dynmap.storage.MapStorage;
 import org.dynmap.storage.MapStorageTile;
 import org.dynmap.utils.MapChunkCache;
-import se.llbit.chunky.main.Chunky;
-import se.llbit.chunky.main.ChunkyOptions;
-import se.llbit.chunky.renderer.RenderContext;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.World;
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -72,11 +68,6 @@ public class RsMapTile extends HDMapTile {
     public boolean render(MapChunkCache mapChunkCache, String s) {
         IsoHDPerspective perspective = (IsoHDPerspective) this.perspective;
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         MapStorage var52 = world.getMapStorage();
         MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, MapType.ImageVariant.STANDARD);
 
@@ -106,18 +97,9 @@ public class RsMapTile extends HDMapTile {
 
                 }
             }), chunkyWorld, perspective.getRequiredChunks(this).stream().map(c -> ChunkPosition.get(c.x, c.z)).collect(Collectors.toList()));
-            final File tempDir = Files.createTempDirectory("chunky-rs3").toFile();
-            scene.saveScene(new RenderContext(new Chunky(ChunkyOptions.getDefaults())) {
-                @Override
-                public File getSceneDirectory() {
-                    return tempDir;
-                }
 
-                @Override
-                public File getSceneFile(String fileName) {
-                    return new File(getSceneDirectory(), fileName);
-                }
-            }, new TaskTracker(new ProgressListener() {
+            FileBufferContext context = new FileBufferContext();
+            scene.saveScene(context, new TaskTracker(new ProgressListener() {
                 @Override
                 public void setProgress(String s, int i, int i1, int i2) {
 
@@ -128,14 +110,13 @@ public class RsMapTile extends HDMapTile {
 
                 }
             }));
-            System.out.println("Scene saved to " + tempDir.getAbsolutePath());
 
             RenderJob job = new ApiClient(RS3_API_URL).createJob(
-                    new File(tempDir, scene.name() + ".json"),
-                    new File(tempDir, scene.name() + ".octree"),
-                    new File(tempDir, scene.name() + ".grass"),
-                    new File(tempDir, scene.name() + ".foliage"),
-                    null,
+                    context.getScene(),
+                    context.getOctree(),
+                    context.getGrass(),
+                    context.getFoliage(),
+                    null, null,
                     new TaskTracker(
                             new ProgressListener() {
                                 @Override
@@ -150,28 +131,28 @@ public class RsMapTile extends HDMapTile {
                             }
                     )
             ).get();
-            // TODO remove temp dir
 
-            new Thread(() -> {
-                System.out.println("Waiting for renderer...");
+            try {
+                while (new ApiClient(RS3_API_URL).getJob(job.getId()).get().getSpp() < job.getTargetSpp()) {
+                    Thread.sleep(1000);
+                }
+
                 try {
-                    while (new ApiClient(RS3_API_URL).getJob(job.getId()).get().getSpp() < 100) {
-                        Thread.sleep(2000);
-                    }
                     mtile.getWriteLock();
                     mtile.write((long) (Math.random() * 10000), new ApiClient(RS3_API_URL).getPicture(job.getId()));
                     MapManager.mapman.pushUpdate(getDynmapWorld(), new Client.Tile(mtile.getURI()));
-                } catch (InterruptedException | ExecutionException | IOException e) {
-                    return;
                 } finally {
                     mtile.releaseWriteLock();
                 }
-            }).start();
+            } catch (InterruptedException | ExecutionException | IOException e) {
+                return false;
+            } finally {
+                MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
         return true;
     }
 

@@ -46,6 +46,48 @@ public class ApiClient {
         client = new OkHttpClient.Builder().build();
     }
 
+    public CompletableFuture<RenderJob> createJob(byte[] scene, byte[] octree, byte[] grass, byte[] foliage, byte[] skymap, String skymapName, TaskTracker taskTracker) {
+        CompletableFuture<RenderJob> result = new CompletableFuture<>();
+
+        MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
+                .setType(MediaType.parse("multipart/form-data"))
+                .addFormDataPart("foliage", "scene.foliage", byteBody(foliage, () -> taskTracker.task("Upload foliage...")))
+                .addFormDataPart("grass", "scene.grass", byteBody(grass, () -> taskTracker.task("Upload task...")))
+                .addFormDataPart("scene", "scene.json", byteBody(scene, () -> taskTracker.task("Upload scene...")))
+                .addFormDataPart("octree", "scene.octree", byteBody(octree, () -> taskTracker.task("Upload octree...")))
+                .addFormDataPart("targetSpp", "100");
+
+        if (skymap != null) {
+            multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymapName, byteBody(skymap, () -> taskTracker.task("Upload skymap...")));
+        }
+
+        client.newCall(new Request.Builder()
+                .url(baseUrl + "/jobs")
+                .post(multipartBuilder.build())
+                .build())
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        result.completeExceptionally(e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (response.code() == 201) {
+                            try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                                result.complete(gson.fromJson(reader, RenderJob.class));
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("The render job could not be created"));
+                        }
+                    }
+                });
+
+        return result;
+    }
+
     public CompletableFuture<RenderJob> createJob(File scene, File octree, File grass, File foliage, File skymap, TaskTracker taskTracker) throws IOException {
         CompletableFuture<RenderJob> result = new CompletableFuture<>();
 
@@ -138,7 +180,7 @@ public class ApiClient {
         return result;
     }
 
-    public static RequestBody fileBody(final File file, Supplier<TaskTracker.Task> taskCreator) {
+    private static RequestBody fileBody(final File file, Supplier<TaskTracker.Task> taskCreator) {
         TaskTracker.Task task = taskCreator.get();
         return new RequestBody() {
             @Override
@@ -167,6 +209,27 @@ public class ApiClient {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                task.close();
+            }
+        };
+    }
+
+    private static RequestBody byteBody(final byte[] content, Supplier<TaskTracker.Task> taskCreator) {
+        TaskTracker.Task task = taskCreator.get();
+        return new RequestBody() {
+            @Override
+            public MediaType contentType() {
+                return MediaType.parse("application/octet-stream");
+            }
+
+            @Override
+            public long contentLength() {
+                return content.length;
+            }
+
+            @Override
+            public void writeTo(BufferedSink bufferedSink) throws IOException {
+                bufferedSink.write(content);
                 task.close();
             }
         };

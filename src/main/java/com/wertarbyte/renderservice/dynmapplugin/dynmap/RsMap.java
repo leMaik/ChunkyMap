@@ -25,11 +25,6 @@ public class RsMap extends HDMap {
         list.add(new RsMapTile(world, getPerspective(), this, tx, ty));
     }
 
-    @Override
-    public ImageFormat getImageFormat() {
-        return ImageFormat.FORMAT_PNG; // TODO support jpg?
-    }
-
     public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int x, int y, int z) {
         return getPerspective().getTileCoords(world, x, y, z);
     }
