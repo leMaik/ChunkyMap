@@ -1,5 +1,6 @@
 package com.wertarbyte.renderservice.dynmapplugin.dynmap;
 
+import com.wertarbyte.renderservice.dynmapplugin.RsDynmapPlugin;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.ApiClient;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.FileBufferContext;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.RenderJob;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RsMapTile extends HDMapTile {
@@ -131,26 +133,28 @@ public class RsMapTile extends HDMapTile {
                             }
                     )
             ).get();
-
-            try {
-                while (new ApiClient(RS3_API_URL).getJob(job.getId()).get().getSpp() < job.getTargetSpp()) {
-                    Thread.sleep(1000);
-                }
-
+            new Thread(() -> {
                 try {
-                    mtile.getWriteLock();
-                    mtile.write((long) (Math.random() * 10000), new ApiClient(RS3_API_URL).getPicture(job.getId()));
-                    MapManager.mapman.pushUpdate(getDynmapWorld(), new Client.Tile(mtile.getURI()));
+                    while (new ApiClient(RS3_API_URL).getJob(job.getId()).get().getSpp() < job.getTargetSpp()) {
+                        Thread.sleep(1000);
+                    }
+
+                    try {
+                        mtile.getWriteLock();
+                        mtile.write((long) (Math.random() * 10000), new ApiClient(RS3_API_URL).getPicture(job.getId()));
+                        MapManager.mapman.pushUpdate(getDynmapWorld(), new Client.Tile(mtile.getURI()));
+                    } finally {
+                        mtile.releaseWriteLock();
+                    }
+                } catch (InterruptedException | ExecutionException | IOException e) {
+                    RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger().log(Level.SEVERE, "Could not wait for a tile", e);
                 } finally {
-                    mtile.releaseWriteLock();
+                    MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
                 }
-            } catch (InterruptedException | ExecutionException | IOException e) {
-                return false;
-            } finally {
-                MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
-            }
+            }).start();
         } catch (Exception e) {
-            e.printStackTrace();
+            RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger().log(Level.SEVERE, "Could not render a tile", e);
+            return false;
         }
 
         return true;
