@@ -25,6 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 
@@ -36,7 +37,10 @@ public class RsDynmapPlugin extends JavaPlugin {
     public void onEnable() {
         Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
         try (InputStream mapIcon = getResource("rs-map-icon.png")) {
-            Files.copy(mapIcon, Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_rs.png"));
+            Path iconPath = Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_rs.png");
+            if (!iconPath.toFile().exists()) {
+                Files.copy(mapIcon, iconPath);
+            }
         } catch (IOException e) {
             getLogger().log(Level.WARNING, "Could not write rs map icon", e);
         }
