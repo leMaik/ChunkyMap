@@ -13,13 +13,13 @@ import java.io.OutputStream;
 /**
  * A mocked {@link RenderContext} for Chunky that saves scene files into buffers. Only supports saving scenes.
  */
-public class FileBufferContext extends RenderContext {
+public class FileBufferRenderContext extends RenderContext {
     private ByteArrayOutputStream scene;
     private ByteArrayOutputStream grass;
     private ByteArrayOutputStream foliage;
     private ByteArrayOutputStream octree;
 
-    public FileBufferContext() {
+    public FileBufferRenderContext() {
         super(new Chunky(ChunkyOptions.getDefaults()));
     }
 
