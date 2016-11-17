@@ -7,6 +7,7 @@ import com.wertarbyte.renderservice.dynmapplugin.rendering.SilentTaskTracker;
 import se.llbit.chunky.renderer.scene.Scene;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +21,7 @@ public class RenderServiceRenderer implements Renderer {
     private static final ApiClient API_CLIENT = new ApiClient(RS3_API_URL);
 
     @Override
-    public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, Consumer<Scene> initializeScene) {
+    public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
         Scene scene = new Scene();

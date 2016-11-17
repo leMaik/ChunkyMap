@@ -1,14 +1,23 @@
 package com.wertarbyte.renderservice.dynmapplugin.dynmap;
 
+import com.wertarbyte.renderservice.dynmapplugin.RsDynmapPlugin;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.Renderer;
 import com.wertarbyte.renderservice.dynmapplugin.rendering.local.ChunkyRenderer;
+import com.wertarbyte.renderservice.dynmapplugin.util.MinecraftDownloader;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
 import org.dynmap.*;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.IsoHDPerspective;
 import org.dynmap.utils.TileFlags;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -17,6 +26,7 @@ import java.util.stream.Collectors;
 public class RsMap extends HDMap {
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
+    private File texturepackPath;
 
     public RsMap(DynmapCore dynmap, ConfigurationNode config) {
         super(dynmap, config);
@@ -25,6 +35,22 @@ public class RsMap extends HDMap {
                 config.getInteger("samplesPerPixel", 100),
                 config.getInteger("chunkyThreads", 2)
         );
+
+        if (!config.containsKey("texturepack")) {
+            RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger()
+                    .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
+                            "The Minecraft 1.10 textures are now downloaded and will be used.");
+            try (Response response = MinecraftDownloader.downloadMinecraft("1.10").get()) {
+                texturepackPath = File.createTempFile("minecraft", ".jar");
+                try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
+                    sink.writeAll(response.body().source());
+                }
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                texturepackPath = null;
+                RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger()
+                        .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
+            }
+        }
     }
 
     @Override
@@ -81,5 +107,9 @@ public class RsMap extends HDMap {
 
     public Renderer getRenderer() {
         return renderer;
+    }
+
+    public File getTexturepackPath() {
+        return texturepackPath;
     }
 }

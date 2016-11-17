@@ -47,7 +47,7 @@ public class RsMapTile extends HDMapTile {
         // TODO texturepack support
         FileBufferRenderContext context = new FileBufferRenderContext();
         try {
-            map.getRenderer().render(context, (scene) -> {
+            map.getRenderer().render(context, map.getTexturepackPath(), (scene) -> {
                 World chunkyWorld = new World(Bukkit.getWorld(world.getRawName()).getWorldFolder(), true);
                 Bukkit.getWorld(world.getRawName()).save();
                 scene.setName(tx + "_" + ty);

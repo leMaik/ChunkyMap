@@ -9,9 +9,11 @@ import se.llbit.chunky.renderer.SnapshotControl;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
 import se.llbit.chunky.resources.BitmapImage;
+import se.llbit.chunky.resources.TexturePackLoader;
 import se.llbit.util.TaskTracker;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
@@ -30,13 +32,19 @@ public class ChunkyRenderer implements Renderer {
     }
 
     @Override
-    public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, Consumer<Scene> initializeScene) {
+    public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
+
+        try {
+            TexturePackLoader.loadTexturePack(texturepack, false); // TODO this means that only one texturepack can be used for all maps
+        } catch (TexturePackLoader.TextureLoadingError e) {
+            result.completeExceptionally(new RenderException("Could not load texturepack", e));
+            return result;
+        }
 
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
         SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
         initializeScene.accept(sceneManager.getScene());
-
         renderer.setSceneProvider(sceneManager);
         renderer.setSnapshotControl(new SnapshotControl() {
             @Override
