@@ -21,7 +21,10 @@ public class RsMap extends HDMap {
     public RsMap(DynmapCore dynmap, ConfigurationNode config) {
         super(dynmap, config);
         cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
-        renderer = new ChunkyRenderer(); // TODO make configurable
+        renderer = new ChunkyRenderer(
+                config.getInteger("samplesPerPixel", 100),
+                config.getInteger("chunkyThreads", 2)
+        );
     }
 
     @Override

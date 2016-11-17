@@ -21,6 +21,14 @@ import java.util.function.Consumer;
  * A renderer that uses Chunky to render scenes locally.
  */
 public class ChunkyRenderer implements Renderer {
+    private final int targetSpp;
+    private final int threads;
+
+    public ChunkyRenderer(int targetSpp, int threads) {
+        this.targetSpp = targetSpp;
+        this.threads = threads;
+    }
+
     @Override
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
@@ -41,7 +49,7 @@ public class ChunkyRenderer implements Renderer {
                 return false;
             }
         });
-        renderer.setNumThreads(2); // TODO make configurable
+        renderer.setNumThreads(threads);
         renderer.setOnRenderCompleted((time, sps) -> {
             try {
                 result.complete(getImage(sceneManager.getScene()));
@@ -51,7 +59,7 @@ public class ChunkyRenderer implements Renderer {
         });
 
         try {
-            sceneManager.getScene().setTargetSpp(100); // TODO make configurable
+            sceneManager.getScene().setTargetSpp(targetSpp);
             sceneManager.getScene().startHeadlessRender();
             renderer.start();
             renderer.join();
