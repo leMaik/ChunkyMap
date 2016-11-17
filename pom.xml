@@ -23,8 +23,8 @@
 
     <repositories>
         <repository>
-            <id>sonatype-oss-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>sonatype-oss-releases</id>
+            <url>https://oss.sonatype.org/content/repositories/releases</url>
         </repository>
         <repository>
             <id>spigot-repo</id>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>se.llbit</groupId>
             <artifactId>chunky-core</artifactId>
-            <version>1.4.1-SNAPSHOT</version>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>us.dynmap</groupId>
