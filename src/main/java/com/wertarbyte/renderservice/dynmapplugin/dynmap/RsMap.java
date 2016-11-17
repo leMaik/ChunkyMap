@@ -1,5 +1,7 @@
 package com.wertarbyte.renderservice.dynmapplugin.dynmap;
 
+import com.wertarbyte.renderservice.dynmapplugin.rendering.Renderer;
+import com.wertarbyte.renderservice.dynmapplugin.rendering.local.ChunkyRenderer;
 import org.dynmap.*;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -14,10 +16,12 @@ import java.util.stream.Collectors;
  */
 public class RsMap extends HDMap {
     public final DynmapCameraAdapter cameraAdapter;
+    private final Renderer renderer;
 
     public RsMap(DynmapCore dynmap, ConfigurationNode config) {
         super(dynmap, config);
         cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
+        renderer = new ChunkyRenderer(); // TODO make configurable
     }
 
     @Override
@@ -70,5 +74,9 @@ public class RsMap extends HDMap {
     @Override
     public List<String> getMapNamesSharingRender(DynmapWorld dynmapWorld) {
         return getMapsSharingRender(dynmapWorld).stream().map(MapType::getName).collect(Collectors.toList());
+    }
+
+    public Renderer getRenderer() {
+        return renderer;
     }
 }
