@@ -8,9 +8,9 @@ ChunkyMap is a map renderer for [Dynmap][dynmap] that uses [Chunky][chunky] to r
 2. Edit `plugins/dynmap/worlds.txt` and change the `map` from `org.dynmap.hdmap.HDMap` to `de.lemaik.chunkymap.dynmap.ChunkyMap` for all maps that you want to render with Chunky.
 3. Restart your server (_restart_ not reload).
 4. Re-render the worlds you enabled the new renderer for by running the following command from the server console: `dynmap fullrender world` (replace `world` with the actual world name).
-5. Wait a while. :hourglass:
-6. Wait even longer. :hourglass: Sorry, rendering with Chunky takes a while, but it's worth it!
-7. Take a look at your new, shiny maps! :stars:
+5. Wait for it… :hourglass:
+6. Wait for it… :hourglass: (Sorry, rendering with Chunky takes a while, but it's worth it!)
+7. Take a look at your new, shiny maps! :sparkles:
 
 ## Configuration
 The maps can be configured by adding options to the map's section in the `world.txt` file.
