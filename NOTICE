@@ -1,0 +1,6 @@
+ChunkyMap uses the following third-party libraries:
+* Chunky under GNU General Public License, Version 3
+* Commons Math under The Apache Software License, Version 2.0
+* DynmapCore under The Apache Software License, Version 2.0
+* Gson under The Apache Software License, Version 2.0
+* OkHttp under The Apache Software License, Version 2.0

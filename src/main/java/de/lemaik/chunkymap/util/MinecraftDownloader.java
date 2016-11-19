@@ -1,4 +1,4 @@
-package com.wertarbyte.renderservice.dynmapplugin.util;
+package de.lemaik.chunkymap.util;
 
 import okhttp3.*;
 

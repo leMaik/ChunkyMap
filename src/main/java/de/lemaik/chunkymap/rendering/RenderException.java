@@ -1,4 +1,4 @@
-package com.wertarbyte.renderservice.dynmapplugin.rendering;
+package de.lemaik.chunkymap.rendering;
 
 /**
  * Exception that is thrown if rendering an image fails.

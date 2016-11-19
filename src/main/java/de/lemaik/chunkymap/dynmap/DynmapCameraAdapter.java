@@ -1,4 +1,4 @@
-package com.wertarbyte.renderservice.dynmapplugin.dynmap;
+package de.lemaik.chunkymap.dynmap;
 
 import org.dynmap.hdmap.IsoHDPerspective;
 import org.dynmap.utils.Matrix3D;

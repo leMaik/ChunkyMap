@@ -1,9 +1,9 @@
-package com.wertarbyte.renderservice.dynmapplugin.dynmap;
+package de.lemaik.chunkymap.dynmap;
 
-import com.wertarbyte.renderservice.dynmapplugin.RsDynmapPlugin;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.Renderer;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.local.ChunkyRenderer;
-import com.wertarbyte.renderservice.dynmapplugin.util.MinecraftDownloader;
+import de.lemaik.chunkymap.ChunkyMapPlugin;
+import de.lemaik.chunkymap.rendering.Renderer;
+import de.lemaik.chunkymap.rendering.local.ChunkyRenderer;
+import de.lemaik.chunkymap.util.MinecraftDownloader;
 import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
@@ -23,12 +23,12 @@ import java.util.stream.Collectors;
 /**
  * A map that uses the RenderService for rendering the tiles.
  */
-public class RsMap extends HDMap {
+public class ChunkyMap extends HDMap {
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File texturepackPath;
 
-    public RsMap(DynmapCore dynmap, ConfigurationNode config) {
+    public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
         super(dynmap, config);
         cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
         renderer = new ChunkyRenderer(
@@ -37,7 +37,7 @@ public class RsMap extends HDMap {
         );
 
         if (!config.containsKey("texturepack")) {
-            RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger()
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
                             "The Minecraft 1.10 textures are now downloaded and will be used.");
             try (Response response = MinecraftDownloader.downloadMinecraft("1.10").get()) {
@@ -47,7 +47,7 @@ public class RsMap extends HDMap {
                 }
             } catch (IOException | ExecutionException | InterruptedException e) {
                 texturepackPath = null;
-                RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger()
+                ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                         .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
             }
         }
@@ -55,7 +55,7 @@ public class RsMap extends HDMap {
 
     @Override
     public void addMapTiles(List<MapTile> list, DynmapWorld world, int tx, int ty) {
-        list.add(new RsMapTile(world, getPerspective(), this, tx, ty));
+        list.add(new ChunkyMapTile(world, getPerspective(), this, tx, ty));
     }
 
     public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int x, int y, int z) {
@@ -68,20 +68,20 @@ public class RsMap extends HDMap {
 
     @Override
     public MapTile[] getAdjecentTiles(MapTile tile) {
-        RsMapTile t = (RsMapTile) tile;
+        ChunkyMapTile t = (ChunkyMapTile) tile;
         DynmapWorld w = t.getDynmapWorld();
         int x = t.tileOrdinalX();
         int y = t.tileOrdinalY();
 
         return new MapTile[]{
-                new RsMapTile(w, getPerspective(), this, x - 1, y - 1),
-                new RsMapTile(w, getPerspective(), this, x - 1, y + 1),
-                new RsMapTile(w, getPerspective(), this, x + 1, y - 1),
-                new RsMapTile(w, getPerspective(), this, x + 1, y + 1),
-                new RsMapTile(w, getPerspective(), this, x, y - 1),
-                new RsMapTile(w, getPerspective(), this, x + 1, y),
-                new RsMapTile(w, getPerspective(), this, x, y + 1),
-                new RsMapTile(w, getPerspective(), this, x - 1, y)};
+                new ChunkyMapTile(w, getPerspective(), this, x - 1, y - 1),
+                new ChunkyMapTile(w, getPerspective(), this, x - 1, y + 1),
+                new ChunkyMapTile(w, getPerspective(), this, x + 1, y - 1),
+                new ChunkyMapTile(w, getPerspective(), this, x + 1, y + 1),
+                new ChunkyMapTile(w, getPerspective(), this, x, y - 1),
+                new ChunkyMapTile(w, getPerspective(), this, x + 1, y),
+                new ChunkyMapTile(w, getPerspective(), this, x, y + 1),
+                new ChunkyMapTile(w, getPerspective(), this, x - 1, y)};
     }
 
     @Override
@@ -93,7 +93,7 @@ public class RsMap extends HDMap {
     public List<MapType> getMapsSharingRender(DynmapWorld world) {
         ArrayList<MapType> maps = new ArrayList<>();
         for (MapType mt : world.maps) {
-            if (mt instanceof RsMap) {
+            if (mt instanceof ChunkyMap) {
                 maps.add(mt);
             }
         }

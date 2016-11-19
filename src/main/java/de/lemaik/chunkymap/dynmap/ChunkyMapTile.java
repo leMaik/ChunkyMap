@@ -1,8 +1,8 @@
-package com.wertarbyte.renderservice.dynmapplugin.dynmap;
+package de.lemaik.chunkymap.dynmap;
 
-import com.wertarbyte.renderservice.dynmapplugin.RsDynmapPlugin;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.FileBufferRenderContext;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.SilentTaskTracker;
+import de.lemaik.chunkymap.ChunkyMapPlugin;
+import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
+import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import org.bukkit.Bukkit;
 import org.dynmap.*;
 import org.dynmap.hdmap.HDMapTile;
@@ -22,17 +22,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class RsMapTile extends HDMapTile {
-    private final RsMap map;
+public class ChunkyMapTile extends HDMapTile {
+    private final ChunkyMap map;
 
-    public RsMapTile(DynmapWorld world, HDPerspective perspective, RsMap map, int tx, int ty) {
+    public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, ChunkyMap map, int tx, int ty) {
         super(world, perspective, tx, ty, 1);
         this.map = map;
     }
 
-    public RsMapTile(DynmapWorld world, String parm) throws Exception {
+    public ChunkyMapTile(DynmapWorld world, String parm) throws Exception {
         super(world, parm);
-        map = (RsMap) world.maps.stream().filter(m -> m instanceof RsMap).findFirst().get();
+        map = (ChunkyMap) world.maps.stream().filter(m -> m instanceof ChunkyMap).findFirst().get();
     }
 
     @Override
@@ -72,7 +72,7 @@ public class RsMapTile extends HDMapTile {
             }).get();
             return true;
         } catch (InterruptedException | ExecutionException e) {
-            RsDynmapPlugin.getPlugin(RsDynmapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed", e);
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed", e);
             return false;
         }
     }
@@ -104,8 +104,8 @@ public class RsMapTile extends HDMapTile {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof RsMapTile) {
-            return ((RsMapTile) o).tx == tx && ((RsMapTile) o).ty == ty;
+        if (o instanceof ChunkyMapTile) {
+            return ((ChunkyMapTile) o).tx == tx && ((ChunkyMapTile) o).ty == ty;
         }
         return false;
     }

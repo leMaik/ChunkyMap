@@ -17,7 +17,7 @@
  * along with Wertarbyte RenderService.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.dynmapplugin.rendering.rs;
+package de.lemaik.chunkymap.rendering.rs;
 
 /**
  * A render job.

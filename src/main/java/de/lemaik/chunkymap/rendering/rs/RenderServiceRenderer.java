@@ -1,9 +1,9 @@
-package com.wertarbyte.renderservice.dynmapplugin.rendering.rs;
+package de.lemaik.chunkymap.rendering.rs;
 
-import com.wertarbyte.renderservice.dynmapplugin.rendering.FileBufferRenderContext;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.RenderException;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.Renderer;
-import com.wertarbyte.renderservice.dynmapplugin.rendering.SilentTaskTracker;
+import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
+import de.lemaik.chunkymap.rendering.RenderException;
+import de.lemaik.chunkymap.rendering.Renderer;
+import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import se.llbit.chunky.renderer.scene.Scene;
 
 import java.awt.image.BufferedImage;

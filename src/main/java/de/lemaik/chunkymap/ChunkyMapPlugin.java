@@ -17,7 +17,7 @@
  * along with Wertarbyte RenderService.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.dynmapplugin;
+package de.lemaik.chunkymap;
 
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,7 +32,7 @@ import java.util.logging.Level;
 /**
  * The main class.
  */
-public class RsDynmapPlugin extends JavaPlugin {
+public class ChunkyMapPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");

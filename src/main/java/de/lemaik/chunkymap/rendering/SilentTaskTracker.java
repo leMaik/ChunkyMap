@@ -1,4 +1,4 @@
-package com.wertarbyte.renderservice.dynmapplugin.rendering;
+package de.lemaik.chunkymap.rendering;
 
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;

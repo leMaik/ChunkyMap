@@ -1,4 +1,4 @@
-name: rsdynmap
+name: ChunkyMap
 version: 1.0.0-SNAPSHOT
-main: com.wertarbyte.renderservice.dynmapplugin.RsDynmapPlugin
+main: de.lemaik.chunkymap.ChunkyMapPlugin
 loadbefore: [dynmap]
