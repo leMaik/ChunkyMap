@@ -26,13 +26,27 @@ The maps can be configured by adding options to the map's section in the `world.
 * Rendering is pretty slow, but I'll improve this by rendering multiple tiles as one image in the future.
 * ChunkyMap, at the moment, only works with Bukkit/Spigot. Supporting more servers would be awesome, though!
 
+## Copyright & License
+ChunkyMap is Copyright 2016 Maik Marschner (leMaik)
+
+Permission to modify and redistribute is granted under the terms of the GNU General Public License, Version 3. See the `LICENSE` file for the full license.
+
+ChunkyMap uses the following third-party libraries:
+* **Chunky by Jesper Öqvist**  
+  Chunky is covered by the GNU General Public License, Version 3. See the license file in `licenses/gpl-3.txt`.
+* **Commons Math by the Apache Software Foundation**  
+  Commons Math is covered by The Apache Software License, Version 2.0. See the license file in `licenses/commons-math.txt`.
+* **DynmapCore by mikeprimm**  
+  DynmapCore is covered by The Apache Software License, Version 2.0. See the license file in `licenses/apache-2.txt`.
+* **Gson by Google**  
+  Gson is covered by The Apache Software License, Version 2.0. See the license file in `licenses/apache-2.txt`.
+* **OkHttp by Square**  
+  OkHttp is covered by The Apache Software License, Version 2.0. See the license file in `licenses/apache-2.txt`.
+
 ## Trivia
 Originally, ChunkyMap was created as a demo for the [RenderService][rs3]. This service allows rendering the tiles on a distributed network of renderers, which is often faster than rendering the tiles locally.
 
 Ironically, I then implemented support for local tile rendering and removed support for using the RenderService. It will come back in the future.
-
-## License
-ChunkyMap is licensed under the GNU General Public License, Version 3.
 
 [dynmap]: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1286593-dynmap
 [chunky]: http://chunky.llbit.se/
