@@ -1,9 +1,11 @@
 package de.lemaik.chunkymap.rendering.local;
 
+import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.RenderException;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
+import se.llbit.chunky.PersistentSettings;
 import se.llbit.chunky.renderer.RenderManager;
 import se.llbit.chunky.renderer.SnapshotControl;
 import se.llbit.chunky.renderer.scene.Scene;
@@ -29,6 +31,9 @@ public class ChunkyRenderer implements Renderer {
     public ChunkyRenderer(int targetSpp, int threads) {
         this.targetSpp = targetSpp;
         this.threads = threads;
+
+        PersistentSettings.changeSettingsDirectory(new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), "chunky"));
+        PersistentSettings.setLoadPlayers(false);
     }
 
     @Override
