@@ -52,6 +52,7 @@ public class ChunkyMapTile extends HDMapTile {
                 Bukkit.getWorld(world.getRawName()).save();
                 scene.setName(tx + "_" + ty);
                 scene.setCanvasSize(128 * (1 << scaled), 128 * (1 << scaled));
+                scene.setTransparentSky(true);
                 map.cameraAdapter.apply(scene.camera(), tx, ty, world.getExtraZoomOutLevels() + map.getMapZoomOutLevels());
 
                 // TODO add config options to increase chunk radius
