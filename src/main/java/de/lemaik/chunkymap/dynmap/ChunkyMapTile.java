@@ -44,7 +44,12 @@ public class ChunkyMapTile extends HDMapTile {
 
         final int scaled = (boostzoom > 0 && MarkerAPIImpl.testTileForBoostMarkers(world, perspective, (double) (tx * 128), (double) (ty * 128), 128.0D)) ? boostzoom : 0;
 
-        // TODO texturepack support
+        // Mark the tiles we're going to render as validated
+        MapTypeState mts = world.getMapState(map);
+        if (mts != null) {
+            mts.validateTile(tx, ty);
+        }
+
         FileBufferRenderContext context = new FileBufferRenderContext();
         try {
             map.getRenderer().render(context, map.getTexturepackPath(), (scene) -> {
