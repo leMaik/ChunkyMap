@@ -94,7 +94,10 @@ public class ChunkyMap extends HDMap {
         ArrayList<MapType> maps = new ArrayList<>();
         for (MapType mt : world.maps) {
             if (mt instanceof ChunkyMap) {
-                maps.add(mt);
+                ChunkyMap chunkyMap = (ChunkyMap) mt;
+                if (chunkyMap.getPerspective() == getPerspective() && chunkyMap.getBoostZoom() == getBoostZoom()) {
+                    maps.add(mt);
+                }
             }
         }
         return maps;
