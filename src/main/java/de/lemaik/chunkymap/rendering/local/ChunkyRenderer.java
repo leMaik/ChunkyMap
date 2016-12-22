@@ -25,6 +25,7 @@ import java.util.function.Consumer;
  * A renderer that uses Chunky to render scenes locally.
  */
 public class ChunkyRenderer implements Renderer {
+    private static File previousTexturepack;
     private final int targetSpp;
     private final int threads;
 
@@ -36,12 +37,20 @@ public class ChunkyRenderer implements Renderer {
         PersistentSettings.setLoadPlayers(false);
     }
 
+    private static void loadTexturepack(File texturepack) throws TexturePackLoader.TextureLoadingError {
+        if (!texturepack.equals(previousTexturepack)) {
+            // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
+            TexturePackLoader.loadTexturePack(texturepack, false);
+            previousTexturepack = texturepack;
+        }
+    }
+
     @Override
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
         try {
-            TexturePackLoader.loadTexturePack(texturepack, false); // TODO this means that only one texturepack can be used for all maps
+            loadTexturepack(texturepack);
         } catch (TexturePackLoader.TextureLoadingError e) {
             result.completeExceptionally(new RenderException("Could not load texturepack", e));
             return result;
