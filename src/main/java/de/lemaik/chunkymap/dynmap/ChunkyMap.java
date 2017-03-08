@@ -7,6 +7,7 @@ import de.lemaik.chunkymap.util.MinecraftDownloader;
 import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
+import org.bukkit.Bukkit;
 import org.dynmap.*;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -36,7 +37,11 @@ public class ChunkyMap extends HDMap {
                 config.getInteger("chunkyThreads", 2)
         );
 
-        if (!config.containsKey("texturepack")) {
+        if (config.containsKey("texturepack")) {
+            texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
+                    .resolve(config.getString("texturepack"))
+                    .toFile();
+        } else {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
                             "The Minecraft 1.10 textures are now downloaded and will be used.");
