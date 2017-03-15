@@ -60,10 +60,9 @@ public class ChunkyMapTile extends HDMapTile {
                 scene.setTransparentSky(true);
                 map.cameraAdapter.apply(scene.camera(), tx, ty, world.getExtraZoomOutLevels() + map.getMapZoomOutLevels());
 
-                // TODO add config options to increase chunk radius
                 scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
                         perspective.getRequiredChunks(this).stream()
-                                .map(c -> ChunkPosition.get(c.x, c.z))
+                                .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
                                 .collect(Collectors.toList()));
             }).thenApply((image) -> {
                 try {
@@ -83,11 +82,11 @@ public class ChunkyMapTile extends HDMapTile {
         }
     }
 
-    private Collection<ChunkPosition> getChunksAround(double centerX, double centerZ, int radius) {
-        ArrayList<ChunkPosition> chunks = new ArrayList<>(4 * radius * radius + 4 * radius + 1);
+    private static Collection<ChunkPosition> getChunksAround(int centerX, int centerZ, int radius) {
+        ArrayList<ChunkPosition> chunks = new ArrayList<>((radius + 1) * (radius + 1));
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                chunks.add(ChunkPosition.get((((int) centerX) >> 4) + x, (((int) centerZ) >> 4) + z));
+                chunks.add(ChunkPosition.get(centerX + x, centerZ + z));
             }
         }
         return chunks;

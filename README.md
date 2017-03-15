@@ -20,6 +20,7 @@ The maps can be configured by adding options to the map's section in the `world.
 | `samplesPerPixel` | Samples per pixel that Chunky should render. More SPP improves the render quality but also increases render time. | 100 |
 | `chunkyThreads` | Number of threads per Chunky instance. More threads will decrease render time but increase the CPU load of your server. | 2 |
 | `texturepack` | Texturepack path, relative to `plugins/dynmap`. Use this option to specify a texturepack for a map. The texturepack in Dynmap's `configuration.txt` is ignored by ChunkyMap. | *None*
+| `chunkPadding` | Radius of additional chunks to be loaded around each chunk that is required to render a tile of the map. This can be used to reduce artifacts caused by shadows and reflections. | 0 | 
 
 ## Ceveats
 * Rendering maps with a `..._lowres` perspective doesn't work at the moment. As a workaround, change the perspective to `..._hires`.
@@ -27,7 +28,7 @@ The maps can be configured by adding options to the map's section in the `world.
 * ChunkyMap, at the moment, only works with Bukkit/Spigot. Supporting more servers would be awesome, though!
 
 ## Copyright & License
-ChunkyMap is Copyright 2016 Maik Marschner (leMaik)
+ChunkyMap is Copyright 2016–2017 Maik Marschner (leMaik)
 
 Permission to modify and redistribute is granted under the terms of the GNU General Public License, Version 3. See the `LICENSE` file for the full license.
 

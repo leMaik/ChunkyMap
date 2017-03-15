@@ -28,6 +28,7 @@ public class ChunkyMap extends HDMap {
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File texturepackPath;
+    private int chunkPadding;
 
     public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
         super(dynmap, config);
@@ -36,6 +37,7 @@ public class ChunkyMap extends HDMap {
                 config.getInteger("samplesPerPixel", 100),
                 config.getInteger("chunkyThreads", 2)
         );
+        chunkPadding = config.getInteger("chunkPadding", 0);
 
         if (config.containsKey("texturepack")) {
             texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
@@ -113,11 +115,15 @@ public class ChunkyMap extends HDMap {
         return getMapsSharingRender(dynmapWorld).stream().map(MapType::getName).collect(Collectors.toList());
     }
 
-    public Renderer getRenderer() {
+    Renderer getRenderer() {
         return renderer;
     }
 
-    public File getTexturepackPath() {
+    File getTexturepackPath() {
         return texturepackPath;
+    }
+
+    int getChunkPadding() {
+        return chunkPadding;
     }
 }
