@@ -5,7 +5,19 @@ ChunkyMap is a map renderer for [Dynmap][dynmap] that uses [Chunky][chunky] to r
 
 ## Installation
 1. Download the latest jar from [the releases page][latest-release] and put it in your plugins directory.
-2. Edit `plugins/dynmap/worlds.txt` and change the `map` from `org.dynmap.hdmap.HDMap` to `de.lemaik.chunkymap.dynmap.ChunkyMap` for all maps that you want to render with Chunky.
+2. Edit `plugins/dynmap/worlds.txt` and change the `class` option from `org.dynmap.hdmap.HDMap` to `de.lemaik.chunkymap.dynmap.ChunkyMap` for all maps that you want to render with Chunky.  
+   Please note that you need to use a _hires_ perspective for those maps ([list of available perspectives][dynmap-perspectives]).   
+
+   This example `worlds.txt` for a single map of a world called `world` might help you:
+    ```yml
+    worlds:
+      - name: world
+        maps:
+          - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+            name: chunky
+            title: World
+            perspective: iso_SE_30_hires
+    ```
 3. Restart your server (_restart_ not reload).
 4. Re-render the worlds you enabled the new renderer for by running the following command from the server console: `dynmap fullrender world` (replace `world` with the actual world name).
 5. Wait for it… :hourglass:
@@ -26,6 +38,9 @@ The maps can be configured by adding options to the map's section in the `world.
 * Rendering maps with a `..._lowres` perspective doesn't work at the moment. As a workaround, change the perspective to `..._hires`.
 * Rendering is pretty slow, but I'll improve this by rendering multiple tiles as one image in the future.
 * ChunkyMap, at the moment, only works with Bukkit/Spigot. Supporting more servers would be awesome, though!
+
+## Dynmaps that use this plugin
+* Craften Server: [Lobby dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
 
 ## Copyright & License
 ChunkyMap is Copyright 2016–2017 Maik Marschner (leMaik)
@@ -53,3 +68,4 @@ Ironically, I then implemented support for local tile rendering and removed supp
 [chunky]: http://chunky.llbit.se/
 [latest-release]: https://github.com/leMaik/ChunkyMap/releases/latest
 [rs3]: https://bitbucket.org/account/user/wertarbyte/projects/RS
+[dynmap-perspectives]: https://github.com/webbukkit/dynmap/wiki/Full-list-of-predefined-perspectives
