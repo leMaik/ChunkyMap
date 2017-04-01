@@ -41,6 +41,7 @@ The maps can be configured by adding options to the map's section in the `world.
 
 ## Dynmaps that use this plugin
 * Craften Server: [Lobby dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
+* AbsoluteCraft: [Creative dynmap](http://map.mc-ac.com/?worldname=Creative&mapname=chunky&zoom=4&x=-144&y=64&z=382)
 
 ## Copyright & License
 ChunkyMap is Copyright 2016–2017 Maik Marschner (leMaik)
