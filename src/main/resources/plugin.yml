@@ -1,4 +1,4 @@
 name: ChunkyMap
-version: 1.1.0
+version: 1.2.0
 main: de.lemaik.chunkymap.ChunkyMapPlugin
 loadbefore: [dynmap]
