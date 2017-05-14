@@ -26,13 +26,13 @@ public class DynmapCameraAdapter {
     public void apply(Camera camera, int tx, int ty, int mapzoomout) {
         double x = tx + 0.5;
         double y = ty + 0.5;
-        Vector3D v = new Vector3D(x * (1 << mapzoomout), y * (1 << mapzoomout), 65);
+        Vector3D v = new Vector3D(x * (1 << mapzoomout) * 16 / perspective.getScale(), y * (1 << mapzoomout) * 16 / perspective.getScale(), 65);
         transform.transform(v);
 
         camera.setProjectionMode(ProjectionMode.PARALLEL);
         camera.setPosition(new Vector3(v.x, v.y, v.z));
         camera.setView((90 - perspective.azimuth + 90) / 180 * Math.PI, (-90 + perspective.inclination) / 180 * Math.PI, 0);
-        camera.setFoV(8.0);
+        camera.setFoV(128 / perspective.getScale());
         camera.setDof(Double.POSITIVE_INFINITY);
     }
 }

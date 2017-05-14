@@ -35,9 +35,8 @@ The maps can be configured by adding options to the map's section in the `world.
 | `chunkPadding` | Radius of additional chunks to be loaded around each chunk that is required to render a tile of the map. This can be used to reduce artifacts caused by shadows and reflections. | 0 | 
 
 ## Ceveats
-* Rendering maps with a `..._lowres` perspective doesn't work at the moment. As a workaround, change the perspective to `..._hires`.
 * Rendering is pretty slow, but I'll improve this by rendering multiple tiles as one image in the future.
-* ChunkyMap, at the moment, only works with Bukkit/Spigot. Supporting more servers would be awesome, though!
+* ChunkyMap only works with Bukkit/Spigot at the moment. Supporting more servers would be awesome, though!
 
 ## Dynmaps that use this plugin
 * Craften Server: [Lobby dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
