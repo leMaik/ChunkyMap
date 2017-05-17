@@ -6,7 +6,7 @@ ChunkyMap is a map renderer for [Dynmap][dynmap] that uses [Chunky][chunky] to r
 ## Installation
 1. Download the latest jar from [the releases page][latest-release] and put it in your plugins directory.
 2. Edit `plugins/dynmap/worlds.txt` and change the `class` option from `org.dynmap.hdmap.HDMap` to `de.lemaik.chunkymap.dynmap.ChunkyMap` for all maps that you want to render with Chunky.  
-   Please note that you need to use a _hires_ perspective for those maps ([list of available perspectives][dynmap-perspectives]).   
+   You can use any perspective and resolution for those maps ([list of available perspectives][dynmap-perspectives]).   
 
    This example `worlds.txt` for a single map of a world called `world` might help you:
     ```yml
