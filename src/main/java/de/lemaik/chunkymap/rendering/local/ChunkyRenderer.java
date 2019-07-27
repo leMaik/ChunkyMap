@@ -37,10 +37,10 @@ public class ChunkyRenderer implements Renderer {
         PersistentSettings.setLoadPlayers(false);
     }
 
-    private static void loadTexturepack(File texturepack) throws TexturePackLoader.TextureLoadingError {
+    private static void loadTexturepack(File texturepack) {
         if (!texturepack.equals(previousTexturepack)) {
             // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
-            TexturePackLoader.loadTexturePack(texturepack, false);
+            TexturePackLoader.loadTexturePacks(texturepack.getAbsolutePath(), false);
             previousTexturepack = texturepack;
         }
     }
@@ -49,12 +49,7 @@ public class ChunkyRenderer implements Renderer {
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-        try {
-            loadTexturepack(texturepack);
-        } catch (TexturePackLoader.TextureLoadingError e) {
-            result.completeExceptionally(new RenderException("Could not load texturepack", e));
-            return result;
-        }
+        loadTexturepack(texturepack);
 
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
         SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
@@ -71,7 +66,6 @@ public class ChunkyRenderer implements Renderer {
                 return false;
             }
         });
-        renderer.setNumThreads(threads);
         renderer.setOnRenderCompleted((time, sps) -> {
             try {
                 result.complete(getImage(sceneManager.getScene()));

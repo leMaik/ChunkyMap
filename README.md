@@ -42,8 +42,13 @@ The maps can be configured by adding options to the map's section in the `world.
 * Craften Server: [Lobby dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
 * AbsoluteCraft: [Creative dynmap](http://map.mc-ac.com/?worldname=Creative&mapname=chunky&zoom=4&x=-144&y=64&z=382)
 
+## Building ChunkyMap
+1. Get the latest version of [Chunky 2](https://chunky.llbit.se/chunky2.html). After updating, you'll find the jar file in `~/.chunky` (Linux/Mac) or `%APPDATA%/.chunky` (Windows). Copy that file into the root directory of this repository and rename it to `chunky.jar`.
+2. Run `mvn install` to install all other dependencies. Chunky 2 can't be installed this way because it's not yet in the Maven repository.
+3. Run `mvn clean package`, the plugin jar will be in the `target` directory.
+
 ## Copyright & License
-ChunkyMap is Copyright 2016–2017 Maik Marschner (leMaik)
+ChunkyMap is Copyright 2016–2019 Maik Marschner (leMaik)
 
 Permission to modify and redistribute is granted under the terms of the GNU General Public License, Version 3. See the `LICENSE` file for the full license.
 

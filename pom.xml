@@ -6,7 +6,7 @@
 
     <groupId>de.lemaik.chunkymap</groupId>
     <artifactId>ChunkyMap</artifactId>
-    <version>1.2.0</version>
+    <version>2.0.0</version>
 
     <licenses>
         <license>
@@ -34,21 +34,32 @@
             <id>dynmap-repo</id>
             <url>http://repo.mikeprimm.com/</url>
         </repository>
+        <repository>
+            <id>local-libs</id>
+            <url>file://${basedir}/lib</url>
+        </repository>
     </repositories>
 
     <dependencies>
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <version>1.13.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>se.llbit</groupId>
             <artifactId>chunky-core</artifactId>
-            <version>1.4.1</version>
+            <version>2.0-alpha2</version>
         </dependency>
         <dependency>
+            <!-- dependency of chunky -->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.2</version>
+        </dependency>
+        <dependency>
+            <!-- this is an older version, but 3.0-SNAPSHOT can't be installed and this works, too -->
             <groupId>us.dynmap</groupId>
             <artifactId>DynmapCore</artifactId>
             <version>2.3</version>
@@ -100,6 +111,28 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>install-external</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <file>${basedir}/chunky.jar</file>
+                            <repositoryLayout>default</repositoryLayout>
+                            <groupId>se.llbit</groupId>
+                            <artifactId>chunky-core</artifactId>
+                            <version>2.0-alpha2</version>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

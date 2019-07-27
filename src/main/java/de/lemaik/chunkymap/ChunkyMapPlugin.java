@@ -37,12 +37,12 @@ public class ChunkyMapPlugin extends JavaPlugin {
     public void onEnable() {
         Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
         try (InputStream mapIcon = getResource("rs-map-icon.png")) {
-            Path iconPath = Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_rs.png");
+            Path iconPath = Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_chunky.png");
             if (!iconPath.toFile().exists()) {
                 Files.copy(mapIcon, iconPath);
             }
         } catch (IOException e) {
-            getLogger().log(Level.WARNING, "Could not write rs map icon", e);
+            getLogger().log(Level.WARNING, "Could not write chunky map icon", e);
         }
     }
 }
