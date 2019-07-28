@@ -6,7 +6,7 @@
 
     <groupId>de.lemaik.chunkymap</groupId>
     <artifactId>ChunkyMap</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 
     <licenses>
         <license>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>se.llbit</groupId>
             <artifactId>chunky-core</artifactId>
-            <version>2.0-alpha2</version>
+            <version>2.0-beta6</version>
         </dependency>
         <dependency>
             <!-- dependency of chunky -->
@@ -124,7 +124,7 @@
                             <repositoryLayout>default</repositoryLayout>
                             <groupId>se.llbit</groupId>
                             <artifactId>chunky-core</artifactId>
-                            <version>2.0-alpha2</version>
+                            <version>2.0-beta6</version>
                             <packaging>jar</packaging>
                             <generatePom>true</generatePom>
                         </configuration>
