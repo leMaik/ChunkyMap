@@ -46,7 +46,7 @@ public class ChunkyMap extends HDMap {
         } else {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
-                            "The Minecraft 1.13.2 textures are now downloaded and will be used.");
+                            "The Minecraft 1.15.2 textures are now downloaded and will be used.");
             try (Response response = MinecraftDownloader.downloadMinecraft("1.15.2").get()) {
                 texturepackPath = File.createTempFile("minecraft", ".jar");
                 try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
