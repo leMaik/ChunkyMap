@@ -35,6 +35,10 @@
             <url>http://repo.mikeprimm.com/</url>
         </repository>
         <repository>
+            <id>wertarbyte-repo</id>
+            <url>https://repo.wertarbyte.com</url>
+        </repository>
+        <repository>
             <id>local-libs</id>
             <url>file://${basedir}/lib</url>
         </repository>
@@ -48,9 +52,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>se.llbit</groupId>
+            <groupId>de.lemaik</groupId>
             <artifactId>chunky-core</artifactId>
-            <version>2.0-beta6</version>
+            <version>1.4.5-223-g1492d4da</version>
         </dependency>
         <dependency>
             <!-- dependency of chunky -->
