@@ -55,6 +55,7 @@ public class ChunkyMapTile extends HDMapTile {
             map.getRenderer().render(context, map.getTexturepackPath(), (scene) -> {
                 World chunkyWorld = World.loadWorld(Bukkit.getWorld(world.getRawName()).getWorldFolder(), World.OVERWORLD_DIMENSION, World.LoggedWarnings.SILENT);
                 Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
+                map.applyTemplateScene(scene);
                 scene.setName(tx + "_" + ty);
                 scene.setCanvasSize(128 * (1 << scaled), 128 * (1 << scaled));
                 scene.setTransparentSky(true);

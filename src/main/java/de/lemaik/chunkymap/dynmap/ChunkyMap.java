@@ -12,9 +12,15 @@ import org.dynmap.*;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.IsoHDPerspective;
 import org.dynmap.utils.TileFlags;
+import se.llbit.chunky.renderer.scene.Scene;
+import se.llbit.json.JsonNumber;
+import se.llbit.json.JsonObject;
+import se.llbit.json.JsonParser;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -28,6 +34,7 @@ public class ChunkyMap extends HDMap {
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File texturepackPath;
+    private JsonObject templateScene;
     private int chunkPadding;
 
     public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
@@ -56,6 +63,23 @@ public class ChunkyMap extends HDMap {
                 texturepackPath = null;
                 ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                         .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
+            }
+        }
+
+        if (config.containsKey("templateScene")) {
+            try (InputStream inputStream = new FileInputStream(Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
+                    .resolve(config.getString("templateScene"))
+                    .toFile())) {
+                templateScene = new JsonParser(inputStream).parse().asObject();
+                templateScene.remove("world");
+                templateScene.set("spp", new JsonNumber(0));
+                templateScene.set("renderTime", new JsonNumber(0));
+                templateScene.remove("chunkList");
+                templateScene.remove("entities");
+                templateScene.remove("actors");
+            } catch (IOException | JsonParser.SyntaxError e) {
+                ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+                        .log(Level.SEVERE, "Could not read the template scene.", e);
             }
         }
     }
@@ -125,5 +149,11 @@ public class ChunkyMap extends HDMap {
 
     int getChunkPadding() {
         return chunkPadding;
+    }
+
+    void applyTemplateScene(Scene scene) {
+        if (this.templateScene != null) {
+            scene.importFromJson(templateScene);
+        }
     }
 }
