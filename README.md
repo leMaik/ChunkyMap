@@ -70,7 +70,7 @@ Originally, ChunkyMap was created as a demo for the [RenderService][rs3]. This s
 Ironically, I then implemented support for local tile rendering and removed support for using the RenderService. It will come back in the future.
 
 [dynmap]: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1286593-dynmap
-[chunky]: http://chunky.llbit.se/
+[chunky]: https://chunky.lemaik.de/
 [latest-release]: https://github.com/leMaik/ChunkyMap/releases/latest
 [rs3]: https://bitbucket.org/account/user/wertarbyte/projects/RS
 [dynmap-perspectives]: https://github.com/webbukkit/dynmap/wiki/Full-list-of-predefined-perspectives
