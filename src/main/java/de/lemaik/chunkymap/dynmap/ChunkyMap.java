@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  * A map that uses the RenderService for rendering the tiles.
  */
 public class ChunkyMap extends HDMap {
+    private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File texturepackPath;
@@ -53,8 +54,8 @@ public class ChunkyMap extends HDMap {
         } else {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
-                            "The Minecraft 1.15.2 textures are now downloaded and will be used.");
-            try (Response response = MinecraftDownloader.downloadMinecraft("1.15.2").get()) {
+                            "The Minecraft " + DEFAULT_TEXTUREPACK_VERSION + " textures are now downloaded and will be used.");
+            try (Response response = MinecraftDownloader.downloadMinecraft(DEFAULT_TEXTUREPACK_VERSION).get()) {
                 texturepackPath = File.createTempFile("minecraft", ".jar");
                 try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
                     sink.writeAll(response.body().source());
