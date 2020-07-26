@@ -51,6 +51,7 @@ public class ChunkyRenderer implements Renderer {
 
         loadTexturepack(texturepack);
 
+        context.setRenderThreadCount(threads); // used by the RenderManager constructor
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
         SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
         initializeScene.accept(sceneManager.getScene());

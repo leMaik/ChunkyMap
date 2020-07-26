@@ -58,4 +58,8 @@ public class FileBufferRenderContext extends RenderContext {
     public byte[] getOctree() {
         return octree.toByteArray();
     }
+
+    public void setRenderThreadCount(int threads){
+      config.renderThreads = threads;
+    }
 }
