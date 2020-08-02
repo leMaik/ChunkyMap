@@ -111,7 +111,7 @@ public class ChunkyRenderer implements Renderer {
 
     private BufferedImage getImage(Scene scene) throws ReflectiveOperationException {
         Class<Scene> sceneClass = Scene.class;
-        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", TaskTracker.class, int.class);
+        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", new Class[] { TaskTracker.class, int.class });
         computeAlpha.setAccessible(true);
         computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE, threads);
 
