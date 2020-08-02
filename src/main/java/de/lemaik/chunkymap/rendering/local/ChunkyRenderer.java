@@ -64,10 +64,12 @@ public class ChunkyRenderer implements Renderer {
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-        if(defaultTexturepack != null){
+        if (defaultTexturepack != null) {
             loadDefaultTexturepack(defaultTexturepack);
         }
-        loadTexturepack(texturepack);
+        if (texturepack != null) {
+            loadTexturepack(texturepack);
+        }
 
         context.setRenderThreadCount(threads); // used by the RenderManager constructor
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
@@ -109,10 +111,7 @@ public class ChunkyRenderer implements Renderer {
 
     private BufferedImage getImage(Scene scene) throws ReflectiveOperationException {
         Class<Scene> sceneClass = Scene.class;
-        Class<?> parameterTypes[] = new Class[2];
-        parameterTypes[0] = TaskTracker.class;
-        parameterTypes[1] = int.class;
-        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", parameterTypes);
+        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", TaskTracker.class, int.class);
         computeAlpha.setAccessible(true);
         computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE, threads);
 

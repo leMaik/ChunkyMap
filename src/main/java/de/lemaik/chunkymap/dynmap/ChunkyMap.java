@@ -31,11 +31,11 @@ import java.util.stream.Collectors;
  * A map that uses the RenderService for rendering the tiles.
  */
 public class ChunkyMap extends HDMap {
-    private static String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
+    private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
-    private File texturepackPath;
     private File defaultTexturepackPath;
+    private File texturepackPath;
     private JsonObject templateScene;
     private int chunkPadding;
 
@@ -47,22 +47,29 @@ public class ChunkyMap extends HDMap {
                 config.getInteger("chunkyThreads", 2)
         );
         chunkPadding = config.getInteger("chunkPadding", 0);
-        DEFAULT_TEXTUREPACK_VERSION = config.getString("texturepackVersion","1.16.1");
+
+        String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
+        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+            .info("Downloading additional textures for Minecraft " + texturepackVersion);
+        try (Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get()) {
+          File tempFile = File.createTempFile("minecraft", ".jar");
+          try (BufferedSink sink = Okio.buffer(Okio.sink(tempFile))) {
+            sink.writeAll(response.body().source());
+          }
+          defaultTexturepackPath = tempFile;
+        } catch (IOException | ExecutionException | InterruptedException e) {
+          ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+              .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap might look bad!", e);
+        }
 
         if (config.containsKey("texturepack")) {
-            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-                    .info("Downloading additional fallback Textures for: " +
-                            "Minecraft " + DEFAULT_TEXTUREPACK_VERSION);
-            defaultTexturepackPath = downloadDefaultTexturepack();
-
             texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
                     .resolve(config.getString("texturepack"))
                     .toFile();
         } else {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
-                            "The Minecraft " + DEFAULT_TEXTUREPACK_VERSION + " textures are now downloaded and will be used.");
-            defaultTexturepackPath = downloadDefaultTexturepack();
+                            "The Minecraft " + texturepackVersion + " textures will be used.");
         }
 
         if (config.containsKey("templateScene")) {
@@ -81,25 +88,6 @@ public class ChunkyMap extends HDMap {
                         .log(Level.SEVERE, "Could not read the template scene.", e);
             }
         }
-    }
-
-    public File getDefaultTexturepackPath(){
-        return defaultTexturepackPath;
-    }
-
-    public File downloadDefaultTexturepack(){
-        try (Response response = MinecraftDownloader.downloadMinecraft(DEFAULT_TEXTUREPACK_VERSION).get()) {
-            texturepackPath = File.createTempFile("minecraft", ".jar");
-            try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
-                sink.writeAll(response.body().source());
-            }
-            return texturepackPath;
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            texturepackPath = null;
-            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-                    .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
-        }
-        return null;
     }
 
     @Override
@@ -159,6 +147,10 @@ public class ChunkyMap extends HDMap {
 
     Renderer getRenderer() {
         return renderer;
+    }
+
+    File getDefaultTexturepackPath(){
+      return defaultTexturepackPath;
     }
 
     File getTexturepackPath() {
