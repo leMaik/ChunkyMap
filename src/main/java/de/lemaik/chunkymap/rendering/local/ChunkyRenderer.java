@@ -26,8 +26,10 @@ import java.util.function.Consumer;
  */
 public class ChunkyRenderer implements Renderer {
     private static File previousTexturepack;
+    private static File previousDefaultTexturepack;
     private final int targetSpp;
     private final int threads;
+    private File defaultTexturepack = null;
 
     public ChunkyRenderer(int targetSpp, int threads) {
         this.targetSpp = targetSpp;
@@ -35,6 +37,11 @@ public class ChunkyRenderer implements Renderer {
 
         PersistentSettings.changeSettingsDirectory(new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), "chunky"));
         PersistentSettings.setLoadPlayers(false);
+    }
+
+    @Override
+    public void setDefaultTexturepack(File texturepack){
+        defaultTexturepack = texturepack;
     }
 
     private static void loadTexturepack(File texturepack) {
@@ -45,11 +52,24 @@ public class ChunkyRenderer implements Renderer {
         }
     }
 
+    private static void loadDefaultTexturepack(File texturepack){
+        if (!texturepack.equals(previousDefaultTexturepack)) {
+            // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
+            TexturePackLoader.loadTexturePacks(texturepack.getAbsolutePath(), false);
+            previousDefaultTexturepack = texturepack;
+        }
+    }
+
     @Override
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-        loadTexturepack(texturepack);
+        if (defaultTexturepack != null) {
+            loadDefaultTexturepack(defaultTexturepack);
+        }
+        if (texturepack != null) {
+            loadTexturepack(texturepack);
+        }
 
         context.setRenderThreadCount(threads); // used by the RenderManager constructor
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
@@ -91,9 +111,9 @@ public class ChunkyRenderer implements Renderer {
 
     private BufferedImage getImage(Scene scene) throws ReflectiveOperationException {
         Class<Scene> sceneClass = Scene.class;
-        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", TaskTracker.class);
+        Method computeAlpha = sceneClass.getDeclaredMethod("computeAlpha", new Class[] { TaskTracker.class, int.class });
         computeAlpha.setAccessible(true);
-        computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE);
+        computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE, threads);
 
         Field finalized = sceneClass.getDeclaredField("finalized");
         finalized.setAccessible(true);

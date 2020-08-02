@@ -2,6 +2,7 @@ package de.lemaik.chunkymap.dynmap;
 
 import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
+import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import org.bukkit.Bukkit;
 import org.dynmap.*;
@@ -52,7 +53,9 @@ public class ChunkyMapTile extends HDMapTile {
 
         FileBufferRenderContext context = new FileBufferRenderContext();
         try {
-            map.getRenderer().render(context, map.getTexturepackPath(), (scene) -> {
+            Renderer renderer = map.getRenderer();
+            renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
+            renderer.render(context, map.getTexturepackPath(), (scene) -> {
                 World chunkyWorld = World.loadWorld(Bukkit.getWorld(world.getRawName()).getWorldFolder(), World.OVERWORLD_DIMENSION, World.LoggedWarnings.SILENT);
                 Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
                 map.applyTemplateScene(scene);
@@ -77,7 +80,7 @@ public class ChunkyMapTile extends HDMapTile {
                 return true;
             }).get();
             return true;
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed", e);
             return false;
         }

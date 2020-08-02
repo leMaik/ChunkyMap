@@ -20,4 +20,11 @@ public interface Renderer {
      * @return future with the rendered image
      */
     CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene);
+
+    /**
+     * set the default / fallback texturepack to use
+     *
+     * @param texturepack
+     */
+    void setDefaultTexturepack(File texturepack);
 }
