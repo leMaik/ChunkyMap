@@ -80,6 +80,9 @@ public class ChunkyMapTile extends HDMapTile {
         } catch (InterruptedException | ExecutionException e) {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed", e);
             return false;
+        } catch(NullPointerException ex){
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed, cause we had a nullpointer Exception", ex);
+            return false;
         }
     }
 
