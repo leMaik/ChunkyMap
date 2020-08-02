@@ -34,6 +34,7 @@ The maps can be configured by adding options to the map's section in the `world.
 | `texturepack` | Texturepack path, relative to `plugins/dynmap`. Use this option to specify a texturepack for a map. The texturepack in Dynmap's `configuration.txt` is ignored by ChunkyMap. | *None*
 | `chunkPadding` | Radius of additional chunks to be loaded around each chunk that is required to render a tile of the map. This can be used to reduce artifacts caused by shadows and reflections. | 0 | 
 | `templateScene` | Path to a Chunky scene file (JSON), relative to `plugins/dynmap`. Use this option to customize the scene that is used for rendering the tiles, e.g. to change the water color. | *None*
+| `texturepackVersion` | The Minecraft version that should be used as fallback textures | 1.16.2
 
 ## Ceveats
 * Rendering is pretty slow, but I'll improve this by rendering multiple tiles as one image in the future.

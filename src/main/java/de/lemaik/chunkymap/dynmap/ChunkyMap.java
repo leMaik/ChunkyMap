@@ -31,10 +31,11 @@ import java.util.stream.Collectors;
  * A map that uses the RenderService for rendering the tiles.
  */
 public class ChunkyMap extends HDMap {
-    private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
+    private static String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File texturepackPath;
+    private File defaultTexturepackPath;
     private JsonObject templateScene;
     private int chunkPadding;
 
@@ -46,8 +47,14 @@ public class ChunkyMap extends HDMap {
                 config.getInteger("chunkyThreads", 2)
         );
         chunkPadding = config.getInteger("chunkPadding", 0);
+        DEFAULT_TEXTUREPACK_VERSION = config.getString("texturepackVersion","1.16.1");
 
         if (config.containsKey("texturepack")) {
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+                    .info("Downloading additional fallback Textures for: " +
+                            "Minecraft " + DEFAULT_TEXTUREPACK_VERSION);
+            defaultTexturepackPath = downloadDefaultTexturepack();
+
             texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
                     .resolve(config.getString("texturepack"))
                     .toFile();
@@ -55,16 +62,7 @@ public class ChunkyMap extends HDMap {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
                     .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
                             "The Minecraft " + DEFAULT_TEXTUREPACK_VERSION + " textures are now downloaded and will be used.");
-            try (Response response = MinecraftDownloader.downloadMinecraft(DEFAULT_TEXTUREPACK_VERSION).get()) {
-                texturepackPath = File.createTempFile("minecraft", ".jar");
-                try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
-                    sink.writeAll(response.body().source());
-                }
-            } catch (IOException | ExecutionException | InterruptedException e) {
-                texturepackPath = null;
-                ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-                        .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
-            }
+            defaultTexturepackPath = downloadDefaultTexturepack();
         }
 
         if (config.containsKey("templateScene")) {
@@ -83,6 +81,25 @@ public class ChunkyMap extends HDMap {
                         .log(Level.SEVERE, "Could not read the template scene.", e);
             }
         }
+    }
+
+    public File getDefaultTexturepackPath(){
+        return defaultTexturepackPath;
+    }
+
+    public File downloadDefaultTexturepack(){
+        try (Response response = MinecraftDownloader.downloadMinecraft(DEFAULT_TEXTUREPACK_VERSION).get()) {
+            texturepackPath = File.createTempFile("minecraft", ".jar");
+            try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
+                sink.writeAll(response.body().source());
+            }
+            return texturepackPath;
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            texturepackPath = null;
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+                    .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap will look bad!", e);
+        }
+        return null;
     }
 
     @Override

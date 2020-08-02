@@ -61,4 +61,10 @@ public class RenderServiceRenderer implements Renderer {
 
         return result;
     }
+
+    @Override
+    public void setDefaultTexturepack(File texturepack) {
+        throw new UnsupportedOperationException();
+    }
+
 }
