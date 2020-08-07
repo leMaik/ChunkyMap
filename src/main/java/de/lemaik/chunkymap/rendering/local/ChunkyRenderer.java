@@ -5,6 +5,7 @@ import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.RenderException;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
+import java.awt.image.DataBufferInt;
 import se.llbit.chunky.PersistentSettings;
 import se.llbit.chunky.renderer.RenderManager;
 import se.llbit.chunky.renderer.SnapshotControl;
@@ -126,11 +127,9 @@ public class ChunkyRenderer implements Renderer {
         BitmapImage bitmap = (BitmapImage) backBuffer.get(scene);
 
         BufferedImage renderedImage = new BufferedImage(bitmap.width, bitmap.height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < bitmap.height; y++) {
-            for (int x = 0; x < bitmap.width; x++) {
-                renderedImage.setRGB(x, y, bitmap.getPixel(x, y));
-            }
-        }
+        DataBufferInt dataBuffer = (DataBufferInt) renderedImage.getRaster().getDataBuffer();
+        int[] data = dataBuffer.getData();
+        System.arraycopy(bitmap.data, 0, data, 0, bitmap.width * bitmap.height);
         return renderedImage;
     }
 }
