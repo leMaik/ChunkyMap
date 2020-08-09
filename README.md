@@ -35,6 +35,27 @@ The maps can be configured by adding options to the map's section in the `world.
 | `chunkPadding` | Radius of additional chunks to be loaded around each chunk that is required to render a tile of the map. This can be used to reduce artifacts caused by shadows and reflections. | 0 | 
 | `templateScene` | Path to a Chunky scene file (JSON), relative to `plugins/dynmap`. Use this option to customize the scene that is used for rendering the tiles, e.g. to change the water color. | *None*
 | `texturepackVersion` | The Minecraft version that should be used as fallback textures | 1.16.2
+| `denoiser.enabled` | Enable denoising using [Intel Open Image Denoise](https://openimagedenoise.github.io/). Only works on Linux | false |
+| `denoiser.albedoSamplesPerPixel` | Samples per pixel for the albedo map. Setting this to 0 will disable the albedo and normal map. | 4 |
+| `denoiser.normalSamplesPerPixel` | Samples per pixel for the normal map. Setting this to 0 will disable the normal map. | 4 |
+
+### Example config
+
+```yml
+worlds:
+  - name: world
+    maps:
+      - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+        name: chunky
+        title: Chunky
+        perspective: iso_SE_30_hires
+        chunkyThreads: 2
+        samplesPerPixel: 20
+        denoiser:
+          enabled: true
+          albedoSamplesPerPixel: 4
+          normalSamplesPerPixel: 4
+```
 
 ## Ceveats
 * Rendering is pretty slow, but I'll improve this by rendering multiple tiles as one image in the future.

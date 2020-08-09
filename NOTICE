@@ -9,3 +9,5 @@ ChunkyMap uses the following third-party libraries:
   Gson is covered by The Apache Software License, Version 2.0. See the license file in licenses/apache-2.txt
 * OkHttp by Square
   OkHttp is covered by The Apache Software License, Version 2.0. See the license file in licenses/apache-2.txt
+* oidnjni by time4tea
+  OkHttp is covered by teh MIT License. See the license file in licenses/oidnjni.txt
