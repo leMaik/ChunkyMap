@@ -88,6 +88,14 @@ public class ChunkyMap extends HDMap {
                         .log(Level.SEVERE, "Could not read the template scene.", e);
             }
         }
+
+        // texturepacks in chunky are static, so only load them once
+        if (defaultTexturepackPath != null) {
+            ChunkyRenderer.loadDefaultTexturepack(defaultTexturepackPath);
+        }
+        if (texturepackPath != null) {
+            ChunkyRenderer.loadTexturepack(texturepackPath);
+        }
     }
 
     @Override

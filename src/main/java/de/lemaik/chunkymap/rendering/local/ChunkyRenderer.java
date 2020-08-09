@@ -65,13 +65,6 @@ public class ChunkyRenderer implements Renderer {
     public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack, Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-        if (defaultTexturepack != null) {
-            loadDefaultTexturepack(defaultTexturepack);
-        }
-        if (texturepack != null) {
-            loadTexturepack(texturepack);
-        }
-
         context.setRenderThreadCount(threads); // used by the RenderManager constructor
         se.llbit.chunky.renderer.Renderer renderer = new RenderManager(context, true);
         SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
