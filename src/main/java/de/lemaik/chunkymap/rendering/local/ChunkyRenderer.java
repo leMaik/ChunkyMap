@@ -163,10 +163,10 @@ public class ChunkyRenderer implements Renderer {
     });
 
     try {
-      if (normalTargetSpp > 0) {
+      if (enableDenoiser && normalTargetSpp > 0) {
         combinedRayTracer.setRayTracer(new NormalTracer());
         sceneManager.getScene().setTargetSpp(normalTargetSpp);
-      } else if (albedoTargetSpp > 0) {
+      } else if (enableDenoiser && albedoTargetSpp > 0) {
         combinedRayTracer.setRayTracer(new AlbedoTracer());
         sceneManager.getScene().setTargetSpp(albedoTargetSpp);
       } else {
