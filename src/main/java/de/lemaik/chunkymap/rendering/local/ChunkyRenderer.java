@@ -87,7 +87,6 @@ public class ChunkyRenderer implements Renderer {
     CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
     CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
-    combinedRayTracer.setRayTracer(combinedRayTracer);
     context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
     RenderManager renderer = new RenderManager(context, false);
 
