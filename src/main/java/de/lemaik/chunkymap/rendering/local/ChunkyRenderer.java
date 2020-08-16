@@ -245,7 +245,7 @@ public class ChunkyRenderer implements Renderer {
       Field finalized = sceneClass.getDeclaredField("finalized");
       finalized.setAccessible(true);
       if (!finalized.getBoolean(scene)) {
-        scene.postProcessFrame(SilentTaskTracker.INSTANCE);
+        scene.postProcessFrame(SilentTaskTracker.INSTANCE, threads);
       }
 
       Field backBuffer = sceneClass.getDeclaredField("backBuffer");
