@@ -63,7 +63,7 @@ worlds:
 
 ## Dynmaps that use this plugin
 * Craften Server: [Lobby dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
-* Greenfield City Minecraft: [Greenfield Dynmap](http://map.greenfieldmc.net/?worldname=world&mapname=chunky)
+* Greenfield City Minecraft: [Greenfield Dynmap](http://map.greenfieldmc.net/?worldname=world&mapname=chunky&zoom=5)
 
 ## Building ChunkyMap
 1. Get the latest version of [Chunky 2][chunky]. After updating, you'll find the jar file in `~/.chunky/lib` (Linux/Mac) or `%APPDATA%\.chunky\lib` (Windows). Copy the `chunky-core-<version>.jar` file into the root directory of this repository and rename it to `chunky.jar`.
