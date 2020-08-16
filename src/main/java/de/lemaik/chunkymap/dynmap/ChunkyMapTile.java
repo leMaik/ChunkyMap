@@ -6,6 +6,7 @@ import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import org.bukkit.Bukkit;
 import org.dynmap.*;
+import org.dynmap.MapType.ImageVariant;
 import org.dynmap.hdmap.HDMapTile;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -27,7 +28,7 @@ public class ChunkyMapTile extends HDMapTile {
     private final ChunkyMap map;
 
     public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, ChunkyMap map, int tx, int ty) {
-        super(world, perspective, tx, ty, 1);
+        super(world, perspective, tx, ty, map.getBoostZoom());
         this.map = map;
     }
 
@@ -39,9 +40,6 @@ public class ChunkyMapTile extends HDMapTile {
     @Override
     public boolean render(MapChunkCache mapChunkCache, String s) {
         IsoHDPerspective perspective = (IsoHDPerspective) this.perspective;
-
-        MapStorage var52 = world.getMapStorage();
-        MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, MapType.ImageVariant.STANDARD);
 
         final int scaled = (boostzoom > 0 && MarkerAPIImpl.testTileForBoostMarkers(world, perspective, (double) (tx * 128), (double) (ty * 128), 128.0D)) ? boostzoom : 0;
 
@@ -69,6 +67,8 @@ public class ChunkyMapTile extends HDMapTile {
                                 .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
                                 .collect(Collectors.toList()));
             }).thenApply((image) -> {
+                MapStorage var52 = world.getMapStorage();
+                MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, ImageVariant.STANDARD);
                 try {
                     mtile.getWriteLock();
                     mtile.write(image.hashCode(), image);
