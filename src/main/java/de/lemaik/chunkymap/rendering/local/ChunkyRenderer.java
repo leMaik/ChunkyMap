@@ -88,6 +88,7 @@ public class ChunkyRenderer implements Renderer {
 
     CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
     context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
+    context.setRenderThreadCount(threads);
     RenderManager renderer = new RenderManager(context, false);
 
     SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
