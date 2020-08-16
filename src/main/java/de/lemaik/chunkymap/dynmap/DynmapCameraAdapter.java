@@ -26,7 +26,7 @@ public class DynmapCameraAdapter {
     public void apply(Camera camera, int tx, int ty, int mapzoomout, int extrazoomout) {
         double x = tx + 0.5;
         double y = ty + 0.5;
-        Vector3D v = new Vector3D(x * (1 << mapzoomout) * 4, y * (1 << mapzoomout) * 4, 65);
+        Vector3D v = new Vector3D(x * (1 << mapzoomout) * 64 / perspective.getScale(), y * (1 << mapzoomout) * 64 / perspective.getScale(), 65);
         transformMapToWorld.transform(v);
 
         camera.setProjectionMode(ProjectionMode.PARALLEL);
