@@ -63,6 +63,10 @@ public class ChunkyMapTile extends HDMapTile {
                 scene.setName(tx + "_" + ty);
                 scene.setCanvasSize(128 * (1 << scaled), 128 * (1 << scaled));
                 scene.setTransparentSky(true);
+                scene.setYClipMin((int) perspective.minheight);
+                if (perspective.maxheight > 0) {
+                  scene.setYClipMax((int) perspective.maxheight);
+                }
                 map.cameraAdapter.apply(scene.camera(), tx, ty, map.getMapZoomOutLevels(), world.getExtraZoomOutLevels());
 
                 scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
