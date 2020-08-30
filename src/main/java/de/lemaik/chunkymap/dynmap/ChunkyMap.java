@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * A map that uses the RenderService for rendering the tiles.
  */
 public class ChunkyMap extends HDMap {
-    private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.1";
+    private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.2";
     public final DynmapCameraAdapter cameraAdapter;
     private final Renderer renderer;
     private File defaultTexturepackPath;
@@ -52,17 +52,19 @@ public class ChunkyMap extends HDMap {
         chunkPadding = config.getInteger("chunkPadding", 0);
 
         String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
-        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-            .info("Downloading additional textures for Minecraft " + texturepackVersion);
-        try (Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get()) {
-          File tempFile = File.createTempFile("minecraft", ".jar");
-          try (BufferedSink sink = Okio.buffer(Okio.sink(tempFile))) {
-            sink.writeAll(response.body().source());
-          }
-          defaultTexturepackPath = tempFile;
-        } catch (IOException | ExecutionException | InterruptedException e) {
-          ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-              .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap might look bad!", e);
+        File texturepackPath = new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), texturepackVersion + ".jar");
+        if (!texturepackPath.exists()) {
+            ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+                .info("Downloading additional textures for Minecraft " + texturepackVersion);
+            try (Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get()) {
+                try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
+                    sink.writeAll(response.body().source());
+                }
+                defaultTexturepackPath = texturepackPath;
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+                    .log(Level.SEVERE, "Downloading the textures failed, your Chunky dynmap might look bad!", e);
+            }
         }
 
         if (config.containsKey("texturepack")) {
