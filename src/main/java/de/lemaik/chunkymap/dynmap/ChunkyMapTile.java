@@ -5,6 +5,8 @@ import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import org.bukkit.Bukkit;
+import org.bukkit.World.Environment;
+import se.llbit.chunky.world.World.LoggedWarnings;
 import org.dynmap.*;
 import org.dynmap.MapType.ImageVariant;
 import org.dynmap.hdmap.HDMapTile;
@@ -54,7 +56,8 @@ public class ChunkyMapTile extends HDMapTile {
             Renderer renderer = map.getRenderer();
             renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
             renderer.render(context, map.getTexturepackPath(), (scene) -> {
-                World chunkyWorld = World.loadWorld(Bukkit.getWorld(world.getRawName()).getWorldFolder(), World.OVERWORLD_DIMENSION, World.LoggedWarnings.SILENT);
+                org.bukkit.World bukkitWorld = Bukkit.getWorld(world.getRawName());
+                World chunkyWorld = World.loadWorld(bukkitWorld.getWorldFolder(), getChunkyDimension(bukkitWorld.getEnvironment()), LoggedWarnings.SILENT);
                 // Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
                 map.applyTemplateScene(scene);
                 scene.setName(tx + "_" + ty);
@@ -83,6 +86,18 @@ public class ChunkyMapTile extends HDMapTile {
         } catch (Exception e) {
             ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger().log(Level.WARNING, "Rendering tile failed", e);
             return false;
+        }
+    }
+
+    private static int getChunkyDimension(Environment environment) {
+        switch(environment) {
+            case NETHER:
+                return World.NETHER_DIMENSION;
+            case THE_END:
+                return World.END_DIMENSION;
+            case NORMAL:
+            default:
+                return World.OVERWORLD_DIMENSION;
         }
     }
 
