@@ -39,8 +39,11 @@ The maps can be configured by adding options to the map's section in the `world.
 | `denoiser.albedoSamplesPerPixel` | Samples per pixel for the albedo map. Setting this to 0 will disable the albedo and normal map. | 4 |
 | `denoiser.normalSamplesPerPixel` | Samples per pixel for the normal map. Setting this to 0 will disable the normal map. | 4 |
 
-### Example config
+## Example configurations
 
+### Simple map rendered with ChunkyMap
+
+`plugins/dynmap/worlds.txt`:
 ```yml
 worlds:
   - name: world
@@ -55,6 +58,66 @@ worlds:
           enabled: true
           albedoSamplesPerPixel: 4
           normalSamplesPerPixel: 4
+```
+
+### Custom perspectives
+Like the default dynmap renderer, ChunkyMap supports custom perspectives. As a starting point, you can use the built-in perspectives from `perspectives.txt` and customize them. More information on how to define custom perspectives can be found [in the corresponding Dynmap wiki article](https://github.com/webbukkit/dynmap/wiki/Defining-custom-perspectives).
+
+The following example adds a maximum height to the nether world so that the dynmap doesn't only show the bedrock layer on top of it.
+
+`plugins/dynmap/worlds.txt`:
+```yml
+worlds:
+  - name: world_nether
+    maps:
+      - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+        name: chunky_nether
+        title: Nether
+        perspective: iso_SE_30_hires_nether
+        chunkyThreads: 2
+        samplesPerPixel: 20
+```
+
+`plugins/dynmap/custom-perspectives.txt`:
+```yml
+perspectives:
+  - class: org.dynmap.hdmap.IsoHDPerspective 
+    name: iso_SE_30_hires_nether
+    azimuth: 135
+    inclination: 30
+    scale: 16
+    maximumheight: 100 # the bedrock layer is at 127
+```
+
+### Customizing the look of a map with template scenes
+You can change how the map looks by providing a template scene. That can be any Chunky scene (`.json`) file or a partial scene file (i.e. a `.json` file that only contains the values that should be changed). ChunkyMap will import many scene options from the template scene, including the sun position, fog and water configuration.
+
+The following example changes the default gray water color to blue.
+
+`plugins/dynmap/worlds.txt`:
+```yml
+worlds:
+  - name: world
+    maps:
+      - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+        name: chunky
+        title: Chunky
+        perspective: iso_SE_30_hires
+        chunkyThreads: 2
+        samplesPerPixel: 20
+        templateScene: blueWater.json
+```
+
+`plugins/dynmap/blueWater.json`:
+```json
+{
+  "useCustomWaterColor": true,
+  "waterColor": {
+    "red": 0.029,
+    "green": 0.031,
+    "blue": 0.16
+  }
+}
 ```
 
 ## Ceveats
