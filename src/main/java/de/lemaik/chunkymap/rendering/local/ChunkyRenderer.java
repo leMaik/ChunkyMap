@@ -46,14 +46,16 @@ public class ChunkyRenderer implements Renderer {
   private final int albedoTargetSpp;
   private final int normalTargetSpp;
   private final int threads;
+  private final int cpuLoad;
 
   public ChunkyRenderer(int targetSpp, boolean enableDenoiser, int albedoTargetSpp,
-      int normalTargetSpp, int threads) {
+      int normalTargetSpp, int threads, int cpuLoad) {
     this.targetSpp = targetSpp;
     this.enableDenoiser = enableDenoiser;
     this.albedoTargetSpp = albedoTargetSpp;
     this.normalTargetSpp = normalTargetSpp;
     this.threads = threads;
+    this.cpuLoad = cpuLoad;
 
     PersistentSettings.changeSettingsDirectory(
         new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), "chunky"));
@@ -90,6 +92,7 @@ public class ChunkyRenderer implements Renderer {
     context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
     context.setRenderThreadCount(threads);
     RenderManager renderer = new RenderManager(context, false);
+    renderer.setCPULoad(cpuLoad);
 
     SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
     initializeScene.accept(sceneManager.getScene());

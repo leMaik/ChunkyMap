@@ -47,7 +47,8 @@ public class ChunkyMap extends HDMap {
             config.getBoolean("denoiser/enabled", false),
             config.getInteger("denoiser/albedoSamplesPerPixel", 16),
             config.getInteger("denoiser/normalSamplesPerPixel", 16),
-            config.getInteger("chunkyThreads", 2)
+            config.getInteger("chunkyThreads", 2),
+            Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
         );
         chunkPadding = config.getInteger("chunkPadding", 0);
 
