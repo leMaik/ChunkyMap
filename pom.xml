@@ -145,7 +145,7 @@
                             <repositoryLayout>default</repositoryLayout>
                             <groupId>se.llbit</groupId>
                             <artifactId>chunky-core</artifactId>
-                            <version>2.2.0-358-g0b44ecd0</version>
+                            <version>2.2.0-382-g9695d95c</version>
                             <packaging>jar</packaging>
                             <generatePom>true</generatePom>
                         </configuration>
