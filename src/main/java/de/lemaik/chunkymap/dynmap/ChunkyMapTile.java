@@ -11,7 +11,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.World.Environment;
-import org.dynmap.Client;
+import org.dynmap.Client.Tile;
 import org.dynmap.DynmapChunk;
 import org.dynmap.DynmapWorld;
 import org.dynmap.MapManager;
@@ -90,7 +90,7 @@ public class ChunkyMapTile extends HDMapTile {
         try {
           mtile.getWriteLock();
           mtile.write(image.hashCode(), image);
-          MapManager.mapman.pushUpdate(getDynmapWorld(), new Client.Tile(mtile.getURI()));
+          MapManager.mapman.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
         } finally {
           mtile.releaseWriteLock();
           MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);

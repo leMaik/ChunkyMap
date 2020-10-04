@@ -16,8 +16,6 @@ import se.llbit.chunky.renderer.RenderContext;
 public class FileBufferRenderContext extends RenderContext {
 
   private ByteArrayOutputStream scene;
-  private ByteArrayOutputStream grass;
-  private ByteArrayOutputStream foliage;
   private ByteArrayOutputStream octree;
 
   public FileBufferRenderContext() {
@@ -28,11 +26,7 @@ public class FileBufferRenderContext extends RenderContext {
   public OutputStream getSceneFileOutputStream(String fileName) throws FileNotFoundException {
     if (fileName.endsWith(".json")) {
       return scene = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".grass")) {
-      return grass = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".foliage")) {
-      return foliage = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".octree")) {
+    } else if (fileName.endsWith(".octree2")) {
       return octree = new ByteArrayOutputStream();
     } else {
       return new OutputStream() {
@@ -46,14 +40,6 @@ public class FileBufferRenderContext extends RenderContext {
 
   public byte[] getScene() {
     return scene.toByteArray();
-  }
-
-  public byte[] getGrass() {
-    return grass.toByteArray();
-  }
-
-  public byte[] getFoliage() {
-    return foliage.toByteArray();
   }
 
   public byte[] getOctree() {

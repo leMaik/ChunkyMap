@@ -3,6 +3,7 @@ package de.lemaik.chunkymap.dynmap;
 import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.local.ChunkyRenderer;
+import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
 import de.lemaik.chunkymap.util.MinecraftDownloader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +48,8 @@ public class ChunkyMap extends HDMap {
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
     cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
+    renderer = new RemoteRenderer(config.getInteger("samplesPerPixel", 100));
+    /*
     renderer = new ChunkyRenderer(
         config.getInteger("samplesPerPixel", 100),
         config.getBoolean("denoiser/enabled", false),
@@ -55,6 +58,7 @@ public class ChunkyMap extends HDMap {
         config.getInteger("chunkyThreads", 2),
         Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
     );
+     */
     chunkPadding = config.getInteger("chunkPadding", 0);
 
     String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);

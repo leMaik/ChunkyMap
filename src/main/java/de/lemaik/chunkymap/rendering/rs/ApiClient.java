@@ -20,6 +20,7 @@
 package de.lemaik.chunkymap.rendering.rs;
 
 import com.google.gson.Gson;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,21 +54,17 @@ public class ApiClient {
     client = new OkHttpClient.Builder().build();
   }
 
-  public CompletableFuture<RenderJob> createJob(byte[] scene, byte[] octree, byte[] grass,
-      byte[] foliage, byte[] skymap, String skymapName, TaskTracker taskTracker) {
+  public CompletableFuture<RenderJob> createJob(byte[] scene, byte[] octree, byte[] skymap,
+      String skymapName, int targetSpp, TaskTracker taskTracker) {
     CompletableFuture<RenderJob> result = new CompletableFuture<>();
 
     MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
         .setType(MediaType.parse("multipart/form-data"))
-        .addFormDataPart("foliage", "scene.foliage",
-            byteBody(foliage, () -> taskTracker.task("Upload foliage...")))
-        .addFormDataPart("grass", "scene.grass",
-            byteBody(grass, () -> taskTracker.task("Upload task...")))
         .addFormDataPart("scene", "scene.json",
             byteBody(scene, () -> taskTracker.task("Upload scene...")))
-        .addFormDataPart("octree", "scene.octree",
+        .addFormDataPart("octree", "scene.octree2",
             byteBody(octree, () -> taskTracker.task("Upload octree...")))
-        .addFormDataPart("targetSpp", "100");
+        .addFormDataPart("targetSpp", "" + targetSpp);
 
     if (skymap != null) {
       multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymapName,
@@ -107,10 +104,6 @@ public class ApiClient {
 
     MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
         .setType(MediaType.parse("multipart/form-data"))
-        .addFormDataPart("foliage", "scene.foliage",
-            fileBody(foliage, () -> taskTracker.task("Upload foliage...")))
-        .addFormDataPart("grass", "scene.grass",
-            fileBody(grass, () -> taskTracker.task("Upload task...")))
         .addFormDataPart("scene", "scene.json",
             fileBody(scene, () -> taskTracker.task("Upload scene...")))
         .addFormDataPart("octree", "scene.octree",
@@ -256,6 +249,12 @@ public class ApiClient {
   }
 
   public BufferedImage getPicture(String id) throws IOException {
-    return ImageIO.read(new URL(baseUrl + "/jobs/" + id + "/latest.png"));
+    BufferedImage image = ImageIO.read(new URL(baseUrl + "/jobs/" + id + "/latest.png"));
+    BufferedImage img = new BufferedImage(image.getWidth(), image.getHeight(),
+        BufferedImage.TYPE_INT_ARGB);
+    Graphics g = img.getGraphics();
+    g.drawImage(image, 0, 0, null);
+    g.dispose();
+    return img;
   }
 }
