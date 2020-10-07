@@ -64,7 +64,8 @@ public class ApiClient {
             byteBody(scene, () -> taskTracker.task("Upload scene...")))
         .addFormDataPart("octree", "scene.octree2",
             byteBody(octree, () -> taskTracker.task("Upload octree...")))
-        .addFormDataPart("targetSpp", "" + targetSpp);
+        .addFormDataPart("targetSpp", "" + targetSpp)
+        .addFormDataPart("transient", "true");
 
     if (skymap != null) {
       multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymapName,
@@ -108,7 +109,8 @@ public class ApiClient {
             fileBody(scene, () -> taskTracker.task("Upload scene...")))
         .addFormDataPart("octree", "scene.octree",
             fileBody(octree, () -> taskTracker.task("Upload octree...")))
-        .addFormDataPart("targetSpp", "100");
+        .addFormDataPart("targetSpp", "100")
+        .addFormDataPart("transient", "true");
 
     if (skymap != null) {
       multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymap.getName(),
@@ -153,7 +155,7 @@ public class ApiClient {
       RenderJob current = renderJob;
       try {
         while (current.getSpp() < current.getTargetSpp()) {
-          Thread.sleep(10_000);
+          Thread.sleep(500);
           current = getJob(current.getId()).get();
         }
         completedJob.complete(current);
