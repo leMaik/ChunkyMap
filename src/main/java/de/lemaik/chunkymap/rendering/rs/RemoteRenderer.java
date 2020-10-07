@@ -30,10 +30,9 @@ public class RemoteRenderer implements Renderer {
     CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
     context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
 
-    RenderManager renderer = new RenderManager(context, false);
-    SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
-    initializeScene.accept(sceneManager.getScene());
-    sceneManager.getScene().saveScene(context, new TaskTracker(ProgressListener.NONE));
+    Scene scene = context.getChunky().getSceneFactory().newScene();
+    initializeScene.accept(scene);
+    scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
 
     RenderJob job = null;
     try {
