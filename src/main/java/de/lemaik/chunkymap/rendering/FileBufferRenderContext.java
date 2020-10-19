@@ -3,7 +3,6 @@ package de.lemaik.chunkymap.rendering;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.OutputStream;
 import se.llbit.chunky.main.Chunky;
 import se.llbit.chunky.main.ChunkyOptions;
@@ -31,7 +30,7 @@ public class FileBufferRenderContext extends RenderContext {
     } else {
       return new OutputStream() {
         @Override
-        public void write(int b) throws IOException {
+        public void write(int b) {
           // no-op
         }
       };
@@ -48,5 +47,10 @@ public class FileBufferRenderContext extends RenderContext {
 
   public void setRenderThreadCount(int threads) {
     config.renderThreads = threads;
+  }
+
+  public void dispose() {
+    scene = null;
+    octree = null;
   }
 }

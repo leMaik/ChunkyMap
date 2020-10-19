@@ -48,17 +48,20 @@ public class ChunkyMap extends HDMap {
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
     cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
-    renderer = new RemoteRenderer(config.getInteger("samplesPerPixel", 100));
-    /*
-    renderer = new ChunkyRenderer(
-        config.getInteger("samplesPerPixel", 100),
-        config.getBoolean("denoiser/enabled", false),
-        config.getInteger("denoiser/albedoSamplesPerPixel", 16),
-        config.getInteger("denoiser/normalSamplesPerPixel", 16),
-        config.getInteger("chunkyThreads", 2),
-        Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
-    );
-     */
+    if (config.getBoolean("chunkycloud/enabled", false)) {
+      renderer = new RemoteRenderer(config.getInteger("samplesPerPixel", 100),
+          config.getString("texturepack", null),
+          config.getBoolean("chunkycloud/initializeLocally", true));
+    } else {
+      renderer = new ChunkyRenderer(
+          config.getInteger("samplesPerPixel", 100),
+          config.getBoolean("denoiser/enabled", false),
+          config.getInteger("denoiser/albedoSamplesPerPixel", 16),
+          config.getInteger("denoiser/normalSamplesPerPixel", 16),
+          config.getInteger("chunkyThreads", 2),
+          Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
+      );
+    }
     chunkPadding = config.getInteger("chunkPadding", 0);
 
     String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
@@ -112,7 +115,7 @@ public class ChunkyMap extends HDMap {
     if (defaultTexturepackPath != null) {
       ChunkyRenderer.loadDefaultTexturepack(defaultTexturepackPath);
     }
-    if (texturepackPath != null) {
+    if (texturepackPath.isFile()) {
       ChunkyRenderer.loadTexturepack(texturepackPath);
     }
   }

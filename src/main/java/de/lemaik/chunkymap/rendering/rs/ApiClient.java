@@ -20,13 +20,16 @@
 package de.lemaik.chunkymap.rendering.rs;
 
 import com.google.gson.Gson;
+import de.lemaik.chunkymap.rendering.RenderException;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.imageio.ImageIO;
 import okhttp3.Call;
@@ -37,7 +40,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.Buffer;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -55,7 +57,7 @@ public class ApiClient {
   }
 
   public CompletableFuture<RenderJob> createJob(byte[] scene, byte[] octree, byte[] skymap,
-      String skymapName, int targetSpp, TaskTracker taskTracker) {
+      String skymapName, String texturepack, int targetSpp, TaskTracker taskTracker) {
     CompletableFuture<RenderJob> result = new CompletableFuture<>();
 
     MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
@@ -72,6 +74,10 @@ public class ApiClient {
           byteBody(skymap, () -> taskTracker.task("Upload skymap...")));
     }
 
+    if (texturepack != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("texturepack", texturepack);
+    }
+
     client.newCall(new Request.Builder()
         .url(baseUrl + "/jobs")
         .post(multipartBuilder.build())
@@ -99,8 +105,61 @@ public class ApiClient {
     return result;
   }
 
+  public CompletableFuture<RenderJob> createJob(byte[] scene, List<File> regionFiles, byte[] skymap,
+      String skymapName, String texturepack, int targetSpp, TaskTracker taskTracker) {
+    CompletableFuture<RenderJob> result = new CompletableFuture<>();
+
+    MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
+        .setType(MediaType.parse("multipart/form-data"))
+        .addFormDataPart("scene", "scene.json",
+            byteBody(scene, () -> taskTracker.task("Upload scene...")))
+        .addFormDataPart("targetSpp", "" + targetSpp)
+        .addFormDataPart("transient", "true");
+
+    for (File region : regionFiles) {
+      multipartBuilder = multipartBuilder.addFormDataPart("region", region.getName(),
+          fileBody(region, () -> taskTracker.task("Upload region " + region.getName())));
+    }
+
+    if (skymap != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymapName,
+          byteBody(skymap, () -> taskTracker.task("Upload skymap...")));
+    }
+
+    if (texturepack != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("texturepack", texturepack);
+    }
+
+    client.newCall(new Request.Builder()
+        .url(baseUrl + "/jobs")
+        .post(multipartBuilder.build())
+        .build())
+        .enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+            result.completeExceptionally(e);
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) throws IOException {
+            if (response.code() == 201) {
+              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                result.complete(gson.fromJson(reader, RenderJob.class));
+              } catch (IOException e) {
+                result.completeExceptionally(e);
+              }
+            } else {
+              result.completeExceptionally(
+                  new IOException("The render job could not be created: " + response.message()));
+            }
+          }
+        });
+
+    return result;
+  }
+
   public CompletableFuture<RenderJob> createJob(File scene, File octree, File grass, File foliage,
-      File skymap, TaskTracker taskTracker) throws IOException {
+      File skymap, String texturepack, TaskTracker taskTracker) throws IOException {
     CompletableFuture<RenderJob> result = new CompletableFuture<>();
 
     MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
@@ -117,6 +176,10 @@ public class ApiClient {
           fileBody(skymap, () -> taskTracker.task("Upload skymap...")));
     }
 
+    if (texturepack != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("texturepack", texturepack);
+    }
+
     client.newCall(new Request.Builder()
         .url(baseUrl + "/jobs")
         .post(multipartBuilder.build())
@@ -144,17 +207,25 @@ public class ApiClient {
     return result;
   }
 
-  public CompletableFuture<RenderJob> waitForCompletion(RenderJob renderJob) {
+  public CompletableFuture<RenderJob> waitForCompletion(RenderJob renderJob, long timeout,
+      TimeUnit unit) {
     if (renderJob.getSpp() >= renderJob.getTargetSpp()) {
       // job is already completed
       return CompletableFuture.completedFuture(renderJob);
     }
 
+    long then = System.currentTimeMillis();
     CompletableFuture<RenderJob> completedJob = new CompletableFuture<>();
     new Thread(() -> {
       RenderJob current = renderJob;
       try {
         while (current.getSpp() < current.getTargetSpp()) {
+          if (then + unit.toMillis(timeout) < System.currentTimeMillis()) {
+            completedJob
+                .completeExceptionally(
+                    new RenderException("Timeout after " + unit.toMillis(timeout) + " ms"));
+            return;
+          }
           Thread.sleep(500);
           current = getJob(current.getId()).get();
         }
@@ -209,19 +280,13 @@ public class ApiClient {
 
       @Override
       public void writeTo(BufferedSink bufferedSink) throws IOException {
-        Source source = null;
-        try {
-          source = Okio.source(file);
-          //sink.writeAll(source);
-          Buffer buf = new Buffer();
+        try (Source source = Okio.source(file)) {
           long read = 0;
-          for (long readCount; (readCount = source.read(buf, 2048)) != -1; ) {
-            bufferedSink.write(buf, readCount);
+          for (long readCount; (readCount = source.read(bufferedSink.buffer(), 2048)) != -1; ) {
             read += readCount;
+            bufferedSink.flush();
             task.update((int) contentLength(), (int) read);
           }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
         task.close();
       }
