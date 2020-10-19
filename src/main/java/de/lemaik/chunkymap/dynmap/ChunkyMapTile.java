@@ -4,6 +4,9 @@ import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
+import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,9 +28,13 @@ import org.dynmap.markers.impl.MarkerAPIImpl;
 import org.dynmap.storage.MapStorage;
 import org.dynmap.storage.MapStorageTile;
 import org.dynmap.utils.MapChunkCache;
+import se.llbit.chunky.entity.PlayerEntity;
+import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.World;
 import se.llbit.chunky.world.World.LoggedWarnings;
+import se.llbit.util.ProgressListener;
+import se.llbit.util.TaskTracker;
 
 public class ChunkyMapTile extends HDMapTile {
 
@@ -80,20 +87,59 @@ public class ChunkyMapTile extends HDMapTile {
         map.cameraAdapter.apply(scene.camera(), tx, ty, map.getMapZoomOutLevels(),
             world.getExtraZoomOutLevels());
 
-        scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
+        if (renderer instanceof RemoteRenderer && ((RemoteRenderer) renderer)
+            .shouldInitializeLocally()) {
+          scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
+              perspective.getRequiredChunks(this).stream()
+                  .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                  .collect(Collectors.toList()));
+          scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
+          try {
+            scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
+          } catch (IOException e) {
+            throw new RuntimeException("Could not save scene", e);
+          }
+        } else {
+          try {
+            Field chunks = Scene.class.getDeclaredField("chunks");
+            chunks.setAccessible(true);
+            Collection<ChunkPosition> chunksList = (Collection<ChunkPosition>) chunks.get(scene);
+            chunksList.clear();
             perspective.getRequiredChunks(this).stream()
                 .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                .collect(Collectors.toList()));
+                .forEach(chunksList::add);
+          } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Could not set chunks", e);
+          }
+          try {
+            Field worldPath = Scene.class.getDeclaredField("worldPath");
+            worldPath.setAccessible(true);
+            worldPath.set(scene, bukkitWorld.getWorldFolder().getAbsolutePath());
+            Field worldDimension = Scene.class.getDeclaredField("worldDimension");
+            worldDimension.setAccessible(true);
+            worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
+          } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Could not set world", e);
+          }
+          try {
+            scene.saveDescription(context.getSceneDescriptionOutputStream(scene.name));
+          } catch (IOException e) {
+            throw new RuntimeException("Could not save scene", e);
+          }
+        }
       }).thenApply((image) -> {
         MapStorage var52 = world.getMapStorage();
         MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, ImageVariant.STANDARD);
-        try {
+        MapManager mapManager = MapManager.mapman;
+        if (mapManager != null) {
           mtile.getWriteLock();
-          mtile.write(image.hashCode(), image);
-          MapManager.mapman.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
-        } finally {
-          mtile.releaseWriteLock();
-          MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
+          try {
+            mtile.write(image.hashCode(), image);
+            mapManager.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
+          } finally {
+            mtile.releaseWriteLock();
+          }
+          mapManager.updateStatistics(this, map.getPrefix(), true, true, false);
         }
         return true;
       }).get();
@@ -102,6 +148,8 @@ public class ChunkyMapTile extends HDMapTile {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .log(Level.WARNING, "Rendering tile failed", e);
       return false;
+    } finally {
+      context.dispose();
     }
   }
 
