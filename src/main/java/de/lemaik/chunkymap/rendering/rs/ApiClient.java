@@ -20,6 +20,11 @@
 package de.lemaik.chunkymap.rendering.rs;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.RenderException;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -28,9 +33,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -105,16 +112,26 @@ public class ApiClient {
     return result;
   }
 
-  public CompletableFuture<RenderJob> createJob(byte[] scene, List<File> regionFiles, byte[] skymap,
+  private CompletableFuture<RenderJob> createJob(byte[] scene, List<File> regionFiles,
+      JsonObject cachedRegions, byte[] skymap,
       String skymapName, String texturepack, int targetSpp, TaskTracker taskTracker) {
     CompletableFuture<RenderJob> result = new CompletableFuture<>();
+
+    JsonObject regions = new JsonObject();
+    for (Entry<String, JsonElement> entry : cachedRegions.entrySet()) {
+      if (regionFiles.stream().noneMatch(file -> file.getName().equals(entry.getKey()))) {
+        // not submitted as file
+        regions.add(entry.getKey(), entry.getValue());
+      }
+    }
 
     MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
         .setType(MediaType.parse("multipart/form-data"))
         .addFormDataPart("scene", "scene.json",
             byteBody(scene, () -> taskTracker.task("Upload scene...")))
         .addFormDataPart("targetSpp", "" + targetSpp)
-        .addFormDataPart("transient", "true");
+        .addFormDataPart("transient", "true")
+        .addFormDataPart("cachedRegions", regions.toString());
 
     for (File region : regionFiles) {
       multipartBuilder = multipartBuilder.addFormDataPart("region", region.getName(),
@@ -146,6 +163,90 @@ public class ApiClient {
               try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
+                result.completeExceptionally(e);
+              }
+            } else {
+              result.completeExceptionally(
+                  new IOException("The render job could not be created: " + response.message()));
+            }
+          }
+        });
+
+    return result;
+  }
+
+  public CompletableFuture<RenderJob> createJob(byte[] scene, List<File> regionFiles, byte[] skymap,
+      String skymapName, String texturepack, int targetSpp, TaskTracker taskTracker)
+      throws IOException {
+    CompletableFuture<RenderJob> result = new CompletableFuture<>();
+
+    JsonObject regions = new JsonObject();
+    for (File region : regionFiles) {
+      regions.addProperty(region.getName(),
+          Okio.buffer(Okio.source(region)).readByteString().md5().hex());
+    }
+
+    MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
+        .setType(MediaType.parse("multipart/form-data"))
+        .addFormDataPart("scene", "scene.json",
+            byteBody(scene, () -> taskTracker.task("Upload scene...")))
+        .addFormDataPart("targetSpp", "" + targetSpp)
+        .addFormDataPart("transient", "true")
+        .addFormDataPart("cachedRegions", regions.toString());
+
+    if (skymap != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymapName,
+          byteBody(skymap, () -> taskTracker.task("Upload skymap...")));
+    }
+
+    if (texturepack != null) {
+      multipartBuilder = multipartBuilder.addFormDataPart("texturepack", texturepack);
+    }
+
+    client.newCall(new Request.Builder()
+        .url(baseUrl + "/jobs")
+        .post(multipartBuilder.build())
+        .build())
+        .enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+            result.completeExceptionally(e);
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) throws IOException {
+            if (response.code() == 201) {
+              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                result.complete(gson.fromJson(reader, RenderJob.class));
+              } catch (IOException e) {
+                result.completeExceptionally(e);
+              }
+            } else if (response.code() == 400) {
+              try {
+                JsonObject obj = new Gson()
+                    .fromJson(response.body().charStream(), JsonObject.class);
+                if (obj.has("missing")) {
+                  try {
+                    ApiClient.this.createJob(scene, regionFiles.stream().filter(
+                        file -> obj.getAsJsonArray("missing")
+                            .contains(new JsonPrimitive(file.getName()))).collect(
+                        Collectors.toList()), regions, skymap, skymapName, texturepack, targetSpp,
+                        taskTracker).whenComplete((job, ex) -> {
+                      if (ex == null) {
+                        result.complete(job);
+                      } else {
+                        result.completeExceptionally(ex);
+                      }
+                    });
+                  } catch (Exception e) {
+                    result.completeExceptionally(e);
+                  }
+                } else {
+                  result.completeExceptionally(
+                      new IOException(
+                          "The render job could not be created: " + response.message()));
+                }
+              } catch (JsonParseException e) {
                 result.completeExceptionally(e);
               }
             } else {
