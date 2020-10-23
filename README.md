@@ -45,6 +45,7 @@ The maps can be configured by adding options to the map's section in the `world.
 | `denoiser.albedoSamplesPerPixel` | Samples per pixel for the albedo map. Setting this to 0 will disable the albedo and normal map.                                                                                  | 4       |
 | `denoiser.normalSamplesPerPixel` | Samples per pixel for the normal map. Setting this to 0 will disable the normal map.                                                                                             | 4       |
 | `chunkycloud.enable`             | Render tiles using the Chunky Cloud render service                                                                                                                               | false   |
+| `chunkycloud.apiKey`             | API Key for the Chunky Cloud render service                                                                                                                                      |         |
 | `chunkycloud.initializeLocally`  | Generate the octree locally. Less data to upload, faster render times but will use a lot of CPU locally.                                                                         | true    |
 
 ## Example configurations

@@ -24,7 +24,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.RenderException;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -56,11 +55,19 @@ public class ApiClient {
 
   private static final Gson gson = new Gson();
   private final String baseUrl;
+  private final String apiKey;
   private final OkHttpClient client;
 
-  public ApiClient(String baseUrl) {
+  public ApiClient(String baseUrl, String apiKey) {
     this.baseUrl = baseUrl;
-    client = new OkHttpClient.Builder().build();
+    this.apiKey = apiKey;
+    client = new OkHttpClient.Builder()
+        .addInterceptor(chain -> chain.proceed(
+            chain.request().newBuilder()
+                .header("X-Api-Key", apiKey)
+                .header("User-Agent", "ChunkyMap")
+                .build()))
+        .build();
   }
 
   public CompletableFuture<RenderJob> createJob(byte[] scene, byte[] octree, byte[] skymap,

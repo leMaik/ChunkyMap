@@ -20,15 +20,17 @@ import se.llbit.util.TaskTracker;
 
 public class RemoteRenderer implements Renderer {
 
-  private final ApiClient api = new ApiClient("https://api.chunkycloud.lemaik.de");
+  private final ApiClient api;
   private final int samplesPerPixel;
   private final String texturepack;
   private final boolean initializeLocally;
 
-  public RemoteRenderer(int samplesPerPixel, String texturepack, boolean initializeLocally) {
+  public RemoteRenderer(String apiKey, int samplesPerPixel, String texturepack,
+      boolean initializeLocally) {
     this.samplesPerPixel = samplesPerPixel;
     this.texturepack = texturepack;
     this.initializeLocally = initializeLocally;
+    this.api = new ApiClient("https://api.chunkycloud.lemaik.de", apiKey);
   }
 
   public boolean shouldInitializeLocally() {
