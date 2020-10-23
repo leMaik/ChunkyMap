@@ -49,9 +49,14 @@ public class ChunkyMap extends HDMap {
     super(dynmap, config);
     cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
     if (config.getBoolean("chunkycloud/enabled", false)) {
-      renderer = new RemoteRenderer(config.getInteger("samplesPerPixel", 100),
+      renderer = new RemoteRenderer(config.getString("chunkycloud/apiKey", ""),
+          config.getInteger("samplesPerPixel", 100),
           config.getString("texturepack", null),
           config.getBoolean("chunkycloud/initializeLocally", true));
+      if (config.getString("chunkycloud/apiKey", "").isEmpty()) {
+        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+            .warning("No ChunkyCloud API Key configured.");
+      }
     } else {
       renderer = new ChunkyRenderer(
           config.getInteger("samplesPerPixel", 100),
