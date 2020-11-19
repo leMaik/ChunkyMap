@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import org.bukkit.Bukkit;
@@ -76,10 +77,12 @@ public class ChunkyMap extends HDMap {
     if (!texturepackPath.exists()) {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .info("Downloading additional textures for Minecraft " + texturepackVersion);
-      try (Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get()) {
-        try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
-          sink.writeAll(response.body().source());
-        }
+      try (
+          Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get();
+          ResponseBody body = response.body();
+          BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))
+      ) {
+        sink.writeAll(body.source());
         defaultTexturepackPath = texturepackPath;
       } catch (IOException | ExecutionException | InterruptedException e) {
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
