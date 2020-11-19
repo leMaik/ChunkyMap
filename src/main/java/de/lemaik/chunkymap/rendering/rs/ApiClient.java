@@ -30,6 +30,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.util.List;
 import java.util.Map.Entry;
@@ -46,6 +47,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -67,6 +69,9 @@ public class ApiClient {
                 .header("X-Api-Key", apiKey)
                 .header("User-Agent", "ChunkyMap")
                 .build()))
+        .connectTimeout(1, TimeUnit.MINUTES)
+        .writeTimeout(15, TimeUnit.MINUTES)
+        .readTimeout(15, TimeUnit.MINUTES)
         .build();
   }
 
@@ -105,7 +110,10 @@ public class ApiClient {
           @Override
           public void onResponse(Call call, Response response) throws IOException {
             if (response.code() == 201) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -167,7 +175,10 @@ public class ApiClient {
           @Override
           public void onResponse(Call call, Response response) throws IOException {
             if (response.code() == 201) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -223,15 +234,20 @@ public class ApiClient {
           @Override
           public void onResponse(Call call, Response response) throws IOException {
             if (response.code() == 201) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
               }
             } else if (response.code() == 400) {
-              try {
-                JsonObject obj = new Gson()
-                    .fromJson(response.body().charStream(), JsonObject.class);
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
+                JsonObject obj = gson.fromJson(reader, JsonObject.class);
                 if (obj.has("missing")) {
                   try {
                     ApiClient.this.createJob(scene, regionFiles.stream().filter(
@@ -301,7 +317,10 @@ public class ApiClient {
           @Override
           public void onResponse(Call call, Response response) throws IOException {
             if (response.code() == 201) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -359,7 +378,10 @@ public class ApiClient {
           @Override
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  Reader reader = body.charStream()
+              ) {
                 result.complete(gson.fromJson(reader, RenderJob.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
