@@ -92,7 +92,7 @@ public class ChunkyMapTile extends HDMapTile {
           scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
               perspective.getRequiredChunks(this).stream()
                   .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                  .collect(Collectors.toList()));
+                  .collect(Collectors.toSet()));
           scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
           try {
             scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
@@ -105,9 +105,9 @@ public class ChunkyMapTile extends HDMapTile {
             chunks.setAccessible(true);
             Collection<ChunkPosition> chunksList = (Collection<ChunkPosition>) chunks.get(scene);
             chunksList.clear();
-            perspective.getRequiredChunks(this).stream()
+            chunksList.addAll(perspective.getRequiredChunks(this).stream()
                 .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                .forEach(chunksList::add);
+                .collect(Collectors.toSet()));
           } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Could not set chunks", e);
           }
