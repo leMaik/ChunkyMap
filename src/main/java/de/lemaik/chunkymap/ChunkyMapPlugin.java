@@ -19,30 +19,31 @@
 
 package de.lemaik.chunkymap;
 
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * The main class.
  */
 public class ChunkyMapPlugin extends JavaPlugin {
-    @Override
-    public void onEnable() {
-        Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
-        try (InputStream mapIcon = getResource("rs-map-icon.png")) {
-            Path iconPath = Paths.get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_chunky.png");
-            if (!iconPath.toFile().exists()) {
-                Files.copy(mapIcon, iconPath);
-            }
-        } catch (IOException e) {
-            getLogger().log(Level.WARNING, "Could not write chunky map icon", e);
-        }
+
+  @Override
+  public void onEnable() {
+    Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
+    try (InputStream mapIcon = getResource("rs-map-icon.png")) {
+      Path iconPath = Paths
+          .get(dynmap.getDataFolder().getAbsolutePath(), "web", "images", "block_chunky.png");
+      if (!iconPath.toFile().exists()) {
+        Files.copy(mapIcon, iconPath);
+      }
+    } catch (IOException e) {
+      getLogger().log(Level.WARNING, "Could not write chunky map icon", e);
     }
+  }
 }

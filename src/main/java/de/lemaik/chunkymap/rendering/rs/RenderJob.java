@@ -23,19 +23,20 @@ package de.lemaik.chunkymap.rendering.rs;
  * A render job.
  */
 public class RenderJob {
-    private String _id;
-    private int spp;
-    private int targetSpp;
 
-    public String getId() {
-        return _id;
-    }
+  private String _id;
+  private int spp;
+  private int targetSpp;
 
-    public int getSpp() {
-        return spp;
-    }
+  public String getId() {
+    return _id;
+  }
 
-    public int getTargetSpp() {
-        return targetSpp;
-    }
+  public int getSpp() {
+    return spp;
+  }
+
+  public int getTargetSpp() {
+    return targetSpp;
+  }
 }

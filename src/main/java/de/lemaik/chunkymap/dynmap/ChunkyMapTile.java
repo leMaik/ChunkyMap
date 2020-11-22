@@ -4,11 +4,20 @@ import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.World.Environment;
-import se.llbit.chunky.world.World.LoggedWarnings;
-import org.dynmap.*;
+import org.dynmap.Client;
+import org.dynmap.DynmapChunk;
+import org.dynmap.DynmapWorld;
+import org.dynmap.MapManager;
+import org.dynmap.MapTile;
 import org.dynmap.MapType.ImageVariant;
+import org.dynmap.MapTypeState;
 import org.dynmap.hdmap.HDMapTile;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -18,13 +27,7 @@ import org.dynmap.storage.MapStorageTile;
 import org.dynmap.utils.MapChunkCache;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.World;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+import se.llbit.chunky.world.World.LoggedWarnings;
 
 public class ChunkyMapTile extends HDMapTile {
 
