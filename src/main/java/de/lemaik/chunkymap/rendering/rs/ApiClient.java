@@ -29,7 +29,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.List;
@@ -392,6 +391,29 @@ public class ApiClient {
           }
         });
 
+    return result;
+  }
+
+  public CompletableFuture<Void> cancelJob(String jobId) {
+    CompletableFuture<Void> result = new CompletableFuture<>();
+    client.newCall(new Request.Builder()
+        .url(baseUrl + "/jobs/" + jobId)
+        .patch(new MultipartBody.Builder().addFormDataPart("action", "cancel").build()).build())
+        .enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+            result.completeExceptionally(e);
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) {
+            if (response.code() == 204) {
+              result.complete(null);
+            } else {
+              result.completeExceptionally(new IOException("The job could not be downloaded"));
+            }
+          }
+        });
     return result;
   }
 
