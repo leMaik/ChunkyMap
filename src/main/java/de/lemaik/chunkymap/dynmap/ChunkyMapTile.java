@@ -87,45 +87,51 @@ public class ChunkyMapTile extends HDMapTile {
         map.cameraAdapter.apply(scene.camera(), tx, ty, map.getMapZoomOutLevels(),
             world.getExtraZoomOutLevels());
 
-        if (renderer instanceof RemoteRenderer && ((RemoteRenderer) renderer)
-            .shouldInitializeLocally()) {
+        if (renderer instanceof RemoteRenderer) {
+          if (((RemoteRenderer) renderer).shouldInitializeLocally()) {
+            scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
+                perspective.getRequiredChunks(this).stream()
+                    .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                    .collect(Collectors.toSet()));
+            scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
+            try {
+              scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
+            } catch (IOException e) {
+              throw new RuntimeException("Could not save scene", e);
+            }
+          } else {
+            try {
+              Field chunks = Scene.class.getDeclaredField("chunks");
+              chunks.setAccessible(true);
+              Collection<ChunkPosition> chunksList = (Collection<ChunkPosition>) chunks.get(scene);
+              chunksList.clear();
+              chunksList.addAll(perspective.getRequiredChunks(this).stream()
+                  .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                  .collect(Collectors.toSet()));
+            } catch (ReflectiveOperationException e) {
+              throw new RuntimeException("Could not set chunks", e);
+            }
+            try {
+              Field worldPath = Scene.class.getDeclaredField("worldPath");
+              worldPath.setAccessible(true);
+              worldPath.set(scene, bukkitWorld.getWorldFolder().getAbsolutePath());
+              Field worldDimension = Scene.class.getDeclaredField("worldDimension");
+              worldDimension.setAccessible(true);
+              worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
+            } catch (ReflectiveOperationException e) {
+              throw new RuntimeException("Could not set world", e);
+            }
+            try {
+              scene.saveDescription(context.getSceneDescriptionOutputStream(scene.name));
+            } catch (IOException e) {
+              throw new RuntimeException("Could not save scene", e);
+            }
+          }
+        } else {
           scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
               perspective.getRequiredChunks(this).stream()
                   .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
                   .collect(Collectors.toSet()));
-          scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
-          try {
-            scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
-          } catch (IOException e) {
-            throw new RuntimeException("Could not save scene", e);
-          }
-        } else {
-          try {
-            Field chunks = Scene.class.getDeclaredField("chunks");
-            chunks.setAccessible(true);
-            Collection<ChunkPosition> chunksList = (Collection<ChunkPosition>) chunks.get(scene);
-            chunksList.clear();
-            chunksList.addAll(perspective.getRequiredChunks(this).stream()
-                .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                .collect(Collectors.toSet()));
-          } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Could not set chunks", e);
-          }
-          try {
-            Field worldPath = Scene.class.getDeclaredField("worldPath");
-            worldPath.setAccessible(true);
-            worldPath.set(scene, bukkitWorld.getWorldFolder().getAbsolutePath());
-            Field worldDimension = Scene.class.getDeclaredField("worldDimension");
-            worldDimension.setAccessible(true);
-            worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
-          } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Could not set world", e);
-          }
-          try {
-            scene.saveDescription(context.getSceneDescriptionOutputStream(scene.name));
-          } catch (IOException e) {
-            throw new RuntimeException("Could not save scene", e);
-          }
         }
       }).thenApply((image) -> {
         MapStorage var52 = world.getMapStorage();
