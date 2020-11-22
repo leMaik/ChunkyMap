@@ -46,7 +46,7 @@ public class RemoteRenderer implements Renderer {
     Scene scene = context.getChunky().getSceneFactory().newScene();
     initializeScene.accept(scene);
 
-    RenderJob job;
+    RenderJob job = null;
     try {
       if (initializeLocally) {
         job = api
@@ -63,6 +63,12 @@ public class RemoteRenderer implements Renderer {
       api.waitForCompletion(job, 30, TimeUnit.MINUTES).get();
       return CompletableFuture.completedFuture(api.getPicture(job.getId()));
     } catch (InterruptedException | ExecutionException e) {
+      if (job != null) {
+        try {
+          api.cancelJob(job.getId()).get();
+        } catch (InterruptedException | ExecutionException ignore) {
+        }
+      }
       throw new IOException("Rendering failed", e);
     }
   }
