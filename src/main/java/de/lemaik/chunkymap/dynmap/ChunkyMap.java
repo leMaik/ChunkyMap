@@ -74,7 +74,9 @@ public class ChunkyMap extends HDMap {
     File texturepackPath = new File(
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(),
         texturepackVersion + ".jar");
-    if (!texturepackPath.exists()) {
+    if (texturepackPath.exists()) {
+      defaultTexturepackPath = texturepackPath;
+    } else {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .info("Downloading additional textures for Minecraft " + texturepackVersion);
       try (
@@ -92,7 +94,7 @@ public class ChunkyMap extends HDMap {
     }
 
     if (config.containsKey("texturepack")) {
-      texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
+      this.texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
           .resolve(config.getString("texturepack"))
           .toFile();
     } else {
@@ -117,14 +119,6 @@ public class ChunkyMap extends HDMap {
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
             .log(Level.SEVERE, "Could not read the template scene.", e);
       }
-    }
-
-    // texturepacks in chunky are static, so only load them once
-    if (defaultTexturepackPath != null) {
-      ChunkyRenderer.loadDefaultTexturepack(defaultTexturepackPath);
-    }
-    if (texturepackPath.isFile()) {
-      ChunkyRenderer.loadTexturepack(texturepackPath);
     }
   }
 
