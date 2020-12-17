@@ -44,7 +44,8 @@ public class ChunkyMap extends HDMap {
   private File defaultTexturepackPath;
   private File texturepackPath;
   private JsonObject templateScene;
-  private int chunkPadding;
+  private final int chunkPadding;
+  private final boolean requeueFailedTiles;
 
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
@@ -69,6 +70,7 @@ public class ChunkyMap extends HDMap {
       );
     }
     chunkPadding = config.getInteger("chunkPadding", 0);
+    requeueFailedTiles = config.getBoolean("requeueFailedTiles", true);
 
     String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
     File texturepackPath = new File(
@@ -194,6 +196,10 @@ public class ChunkyMap extends HDMap {
 
   int getChunkPadding() {
     return chunkPadding;
+  }
+
+  public boolean getRequeueFailedTiles() {
+    return requeueFailedTiles;
   }
 
   void applyTemplateScene(Scene scene) {

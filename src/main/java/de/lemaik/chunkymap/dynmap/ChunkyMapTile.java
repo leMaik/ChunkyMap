@@ -153,6 +153,12 @@ public class ChunkyMapTile extends HDMapTile {
     } catch (Exception e) {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .log(Level.WARNING, "Rendering tile failed", e);
+
+      if (map.getRequeueFailedTiles()) {
+        // Re-queue the failed tile
+        // Somewhat hacky but works surprisingly well
+        MapManager.mapman.tileQueue.push(this);
+      }
       return false;
     } finally {
       context.dispose();
