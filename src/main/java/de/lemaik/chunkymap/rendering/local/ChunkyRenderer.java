@@ -39,8 +39,8 @@ import se.llbit.util.TaskTracker;
  */
 public class ChunkyRenderer implements Renderer {
 
-  private static File previousTexturepack;
-  private static File previousDefaultTexturepack;
+  private static String previousTexturepacks;
+  private File defaultTexturepack;
   private final int targetSpp;
   private final boolean enableDenoiser;
   private final int albedoTargetSpp;
@@ -60,33 +60,38 @@ public class ChunkyRenderer implements Renderer {
     PersistentSettings.changeSettingsDirectory(
         new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), "chunky"));
     PersistentSettings.setLoadPlayers(false);
+    PersistentSettings.setDisableDefaultTextures(true);
   }
 
   @Override
   public void setDefaultTexturepack(File texturepack) {
-    // no-op, textures are static in Chunky and were already loaded
+    defaultTexturepack = texturepack;
   }
 
-  public static void loadTexturepack(File texturepack) {
-    if (!texturepack.equals(previousTexturepack)) {
-      // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
-      TexturePackLoader.loadTexturePacks(texturepack.getAbsolutePath(), false);
-      previousTexturepack = texturepack;
+  private String getTexturepackPaths(File texturepack) {
+    if (defaultTexturepack != null) {
+      if (texturepack != null) {
+        return texturepack.getAbsolutePath() + File.pathSeparator + defaultTexturepack
+            .getAbsolutePath();
+      } else {
+        return defaultTexturepack.getAbsolutePath();
+      }
+    } else if (texturepack != null) {
+      return texturepack.getAbsolutePath();
     }
-  }
-
-  public static void loadDefaultTexturepack(File texturepack) {
-    if (!texturepack.equals(previousDefaultTexturepack)) {
-      // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
-      TexturePackLoader.loadTexturePacks(texturepack.getAbsolutePath(), false);
-      previousDefaultTexturepack = texturepack;
-    }
+    return "";
   }
 
   @Override
   public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
       Consumer<Scene> initializeScene) {
     CompletableFuture<BufferedImage> result = new CompletableFuture<>();
+
+    String texturepackPaths = this.getTexturepackPaths(texturepack);
+    if (!texturepackPaths.equals(previousTexturepacks)) {
+      TexturePackLoader.loadTexturePacks(texturepackPaths, false);
+      previousTexturepacks = texturepackPaths;
+    }
 
     CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
     context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
