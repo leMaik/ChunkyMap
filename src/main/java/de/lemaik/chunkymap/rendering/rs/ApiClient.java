@@ -56,21 +56,19 @@ public class ApiClient {
 
   private static final Gson gson = new Gson();
   private final String baseUrl;
-  private final String apiKey;
   private final OkHttpClient client;
 
   public ApiClient(String baseUrl, String apiKey) {
     this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
     client = new OkHttpClient.Builder()
         .addInterceptor(chain -> chain.proceed(
             chain.request().newBuilder()
                 .header("X-Api-Key", apiKey)
                 .header("User-Agent", "ChunkyMap")
                 .build()))
-        .connectTimeout(1, TimeUnit.MINUTES)
+        .connectTimeout(10, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.MINUTES)
-        .readTimeout(15, TimeUnit.MINUTES)
+        .readTimeout(10, TimeUnit.SECONDS)
         .build();
   }
 
@@ -107,18 +105,23 @@ public class ApiClient {
           }
 
           @Override
-          public void onResponse(Call call, Response response) throws IOException {
-            if (response.code() == 201) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                result.complete(gson.fromJson(reader, RenderJob.class));
-              } catch (IOException e) {
-                result.completeExceptionally(e);
+          public void onResponse(Call call, Response response) {
+            try {
+              if (response.code() == 201) {
+                try (
+                    ResponseBody body = response.body();
+                    Reader reader = body.charStream()
+                ) {
+                  result.complete(gson.fromJson(reader, RenderJob.class));
+                } catch (IOException e) {
+                  result.completeExceptionally(e);
+                }
+              } else {
+                result
+                    .completeExceptionally(new IOException("The render job could not be created"));
               }
-            } else {
-              result.completeExceptionally(new IOException("The render job could not be created"));
+            } finally {
+              response.close();
             }
           }
         });
@@ -172,19 +175,25 @@ public class ApiClient {
           }
 
           @Override
-          public void onResponse(Call call, Response response) throws IOException {
-            if (response.code() == 201) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                result.complete(gson.fromJson(reader, RenderJob.class));
-              } catch (IOException e) {
-                result.completeExceptionally(e);
+          public void onResponse(Call call, Response response) {
+            try {
+              if (response.code() == 201) {
+                try (
+                    ResponseBody body = response.body();
+                    Reader reader = body.charStream()
+                ) {
+                  result.complete(gson.fromJson(reader, RenderJob.class));
+                } catch (IOException e) {
+                  result.completeExceptionally(e);
+                }
+              } else {
+                result.completeExceptionally(
+                    new IOException(
+                        "The render job could not be created: " + response.code() + " " + response
+                            .message()));
               }
-            } else {
-              result.completeExceptionally(
-                  new IOException("The render job could not be created: " + response.message()));
+            } finally {
+              response.close();
             }
           }
         });
@@ -232,100 +241,63 @@ public class ApiClient {
 
           @Override
           public void onResponse(Call call, Response response) throws IOException {
-            if (response.code() == 201) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                result.complete(gson.fromJson(reader, RenderJob.class));
-              } catch (IOException e) {
-                result.completeExceptionally(e);
-              }
-            } else if (response.code() == 400) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                JsonObject obj = gson.fromJson(reader, JsonObject.class);
-                if (obj.has("missing")) {
-                  try {
-                    ApiClient.this.createJob(scene, regionFiles.stream().filter(
-                        file -> obj.getAsJsonArray("missing")
-                            .contains(new JsonPrimitive(file.getName()))).collect(
-                        Collectors.toList()), regions, skymap, skymapName, texturepack, targetSpp,
-                        taskTracker).whenComplete((job, ex) -> {
-                      if (ex == null) {
-                        result.complete(job);
-                      } else {
-                        result.completeExceptionally(ex);
-                      }
-                    });
-                  } catch (Exception e) {
-                    result.completeExceptionally(e);
-                  }
-                } else {
-                  result.completeExceptionally(
-                      new IOException(
-                          "The render job could not be created: " + response.message()));
+            try {
+              if (response.code() == 201) {
+                try (
+                    ResponseBody body = response.body();
+                    Reader reader = body.charStream()
+                ) {
+                  result.complete(gson.fromJson(reader, RenderJob.class));
+                } catch (IOException e) {
+                  result.completeExceptionally(e);
                 }
-              } catch (JsonParseException e) {
-                result.completeExceptionally(e);
+              } else if (response.code() == 400) {
+                try (
+                    ResponseBody body = response.body();
+                    Reader reader = body.charStream()
+                ) {
+                  JsonObject obj = gson.fromJson(reader, JsonObject.class);
+                  if (obj.has("missing")) {
+                    try {
+                      ApiClient.this.createJob(scene, regionFiles.stream().filter(
+                          file -> obj.getAsJsonArray("missing")
+                              .contains(new JsonPrimitive(file.getName()))).collect(
+                          Collectors.toList()), regions, skymap, skymapName, texturepack, targetSpp,
+                          taskTracker).whenComplete((job, ex) -> {
+                        if (ex == null) {
+                          result.complete(job);
+                        } else {
+                          result.completeExceptionally(ex);
+                        }
+                      });
+                    } catch (Exception e) {
+                      result.completeExceptionally(e);
+                    }
+                  } else {
+                    result.completeExceptionally(
+                        new IOException(
+                            "The render job could not be created: " + response.code() + " "
+                                + response.message() + " " + obj.toString()));
+                  }
+                } catch (JsonParseException e) {
+                  result.completeExceptionally(e);
+                }
+              } else {
+                String responseBody = "";
+                ResponseBody body = response.body();
+                if (body != null) {
+                  try {
+                    responseBody = body.string();
+                  } catch (IOException e) {
+                  }
+                }
+                result.completeExceptionally(
+                    new IOException(
+                        "The render job could not be created: " + response.code() + " "
+                            + response.message() + " " + responseBody));
               }
-            } else {
-              result.completeExceptionally(
-                  new IOException("The render job could not be created: " + response.message()));
-            }
-          }
-        });
-
-    return result;
-  }
-
-  public CompletableFuture<RenderJob> createJob(File scene, File octree, File grass, File foliage,
-      File skymap, String texturepack, TaskTracker taskTracker) throws IOException {
-    CompletableFuture<RenderJob> result = new CompletableFuture<>();
-
-    MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
-        .setType(MediaType.parse("multipart/form-data"))
-        .addFormDataPart("scene", "scene.json",
-            fileBody(scene, () -> taskTracker.task("Upload scene...")))
-        .addFormDataPart("octree", "scene.octree",
-            fileBody(octree, () -> taskTracker.task("Upload octree...")))
-        .addFormDataPart("targetSpp", "100")
-        .addFormDataPart("transient", "true");
-
-    if (skymap != null) {
-      multipartBuilder = multipartBuilder.addFormDataPart("skymap", skymap.getName(),
-          fileBody(skymap, () -> taskTracker.task("Upload skymap...")));
-    }
-
-    if (texturepack != null) {
-      multipartBuilder = multipartBuilder.addFormDataPart("texturepack", texturepack);
-    }
-
-    client.newCall(new Request.Builder()
-        .url(baseUrl + "/jobs")
-        .post(multipartBuilder.build())
-        .build())
-        .enqueue(new Callback() {
-          @Override
-          public void onFailure(Call call, IOException e) {
-            result.completeExceptionally(e);
-          }
-
-          @Override
-          public void onResponse(Call call, Response response) throws IOException {
-            if (response.code() == 201) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                result.complete(gson.fromJson(reader, RenderJob.class));
-              } catch (IOException e) {
-                result.completeExceptionally(e);
-              }
-            } else {
-              result.completeExceptionally(new IOException("The render job could not be created"));
+            } finally {
+              response.close();
             }
           }
         });
@@ -340,7 +312,7 @@ public class ApiClient {
       return CompletableFuture.completedFuture(renderJob);
     }
 
-    long then = System.currentTimeMillis();
+    final long then = System.currentTimeMillis();
     CompletableFuture<RenderJob> completedJob = new CompletableFuture<>();
     new Thread(() -> {
       RenderJob current = renderJob;
@@ -376,17 +348,23 @@ public class ApiClient {
 
           @Override
           public void onResponse(Call call, Response response) {
-            if (response.code() == 200) {
-              try (
-                  ResponseBody body = response.body();
-                  Reader reader = body.charStream()
-              ) {
-                result.complete(gson.fromJson(reader, RenderJob.class));
-              } catch (IOException e) {
-                result.completeExceptionally(e);
+            try {
+              if (response.code() == 200) {
+                try (
+                    ResponseBody body = response.body();
+                    Reader reader = body.charStream()
+                ) {
+                  result.complete(gson.fromJson(reader, RenderJob.class));
+                } catch (IOException e) {
+                  result.completeExceptionally(e);
+                }
+              } else {
+                result.completeExceptionally(new IOException(
+                    "The job could not be downloaded " + response.code() + " " + response
+                        .message()));
               }
-            } else {
-              result.completeExceptionally(new IOException("The job could not be downloaded"));
+            } finally {
+              response.close();
             }
           }
         });
@@ -407,10 +385,16 @@ public class ApiClient {
 
           @Override
           public void onResponse(Call call, Response response) {
-            if (response.code() == 204) {
-              result.complete(null);
-            } else {
-              result.completeExceptionally(new IOException("The job could not be downloaded"));
+            try {
+              if (response.code() == 204) {
+                result.complete(null);
+              } else {
+                result.completeExceptionally(new IOException(
+                    "The job could not be downloaded " + response.code() + " " + response
+                        .message()));
+              }
+            } finally {
+              response.close();
             }
           }
         });

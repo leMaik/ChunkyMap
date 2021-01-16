@@ -1,6 +1,5 @@
 package de.lemaik.chunkymap.rendering.rs;
 
-import de.lemaik.chunky.denoiser.CombinedRayTracer;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import java.awt.image.BufferedImage;
@@ -40,9 +39,6 @@ public class RemoteRenderer implements Renderer {
   @Override
   public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
       Consumer<Scene> initializeScene) throws IOException {
-    CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
-    context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
-
     Scene scene = context.getChunky().getSceneFactory().newScene();
     initializeScene.accept(scene);
 
@@ -60,7 +56,7 @@ public class RemoteRenderer implements Renderer {
                 .collect(Collectors.toList()), null, null,
             this.texturepack, samplesPerPixel, new TaskTracker(ProgressListener.NONE)).get();
       }
-      api.waitForCompletion(job, 30, TimeUnit.MINUTES).get();
+      api.waitForCompletion(job, 10, TimeUnit.MINUTES).get();
       return CompletableFuture.completedFuture(api.getPicture(job.getId()));
     } catch (InterruptedException | ExecutionException e) {
       if (job != null) {
