@@ -105,6 +105,25 @@ perspectives:
     maximumheight: 100 # the bedrock layer is at 127
 ```
 
+### Rendering ChunkyMap on ChunkyCloud
+
+`plugins/dynmap/worlds.txt`:
+
+```yml
+worlds:
+  - name: world
+    maps:
+      - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+        name: chunky
+        title: Chunky
+        perspective: iso_SE_30_hires
+        samplesPerPixel: 20
+        chunkycloud:
+          enabled: true
+          initializeLocally: false
+          apiKey: your-secret-api-key
+```
+
 ### Customizing the look of a map with template scenes
 
 You can change how the map looks by providing a template scene. That can be any Chunky scene (`.json`) file or a partial scene file (i.e. a `.json` file that only contains the values that should be changed). ChunkyMap will import many scene options from the template scene, including the sun position, fog and water configuration.
