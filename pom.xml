@@ -19,7 +19,7 @@
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <chunky.version>2.3.0-30-g82f6ab17</chunky.version>
+    <chunky.version>2.3.0-32-g9623108f</chunky.version>
   </properties>
 
   <repositories>
@@ -73,7 +73,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>3.4.1</version>
+      <version>3.14.9</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>

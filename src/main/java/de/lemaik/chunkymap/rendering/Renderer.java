@@ -2,6 +2,7 @@ package de.lemaik.chunkymap.rendering;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import se.llbit.chunky.renderer.scene.Scene;
@@ -20,7 +21,8 @@ public interface Renderer {
    * @return future with the rendered image
    */
   CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
-      Consumer<Scene> initializeScene);
+      Consumer<Scene> initializeScene)
+      throws IOException;
 
   /**
    * set the default / fallback texturepack to use

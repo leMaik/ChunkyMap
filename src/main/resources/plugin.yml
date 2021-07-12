@@ -2,3 +2,4 @@ name: ChunkyMap
 version: ${project.version}
 main: de.lemaik.chunkymap.ChunkyMapPlugin
 loadbefore: [dynmap]
+softdepend: [dynmap]

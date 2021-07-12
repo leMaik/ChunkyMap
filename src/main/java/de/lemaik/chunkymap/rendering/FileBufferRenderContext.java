@@ -3,7 +3,6 @@ package de.lemaik.chunkymap.rendering;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.OutputStream;
 import se.llbit.chunky.main.Chunky;
 import se.llbit.chunky.main.ChunkyOptions;
@@ -16,8 +15,6 @@ import se.llbit.chunky.renderer.RenderContext;
 public class FileBufferRenderContext extends RenderContext {
 
   private ByteArrayOutputStream scene;
-  private ByteArrayOutputStream grass;
-  private ByteArrayOutputStream foliage;
   private ByteArrayOutputStream octree;
 
   public FileBufferRenderContext() {
@@ -28,16 +25,12 @@ public class FileBufferRenderContext extends RenderContext {
   public OutputStream getSceneFileOutputStream(String fileName) throws FileNotFoundException {
     if (fileName.endsWith(".json")) {
       return scene = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".grass")) {
-      return grass = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".foliage")) {
-      return foliage = new ByteArrayOutputStream();
-    } else if (fileName.endsWith(".octree")) {
+    } else if (fileName.endsWith(".octree2")) {
       return octree = new ByteArrayOutputStream();
     } else {
       return new OutputStream() {
         @Override
-        public void write(int b) throws IOException {
+        public void write(int b) {
           // no-op
         }
       };
@@ -48,19 +41,16 @@ public class FileBufferRenderContext extends RenderContext {
     return scene.toByteArray();
   }
 
-  public byte[] getGrass() {
-    return grass.toByteArray();
-  }
-
-  public byte[] getFoliage() {
-    return foliage.toByteArray();
-  }
-
   public byte[] getOctree() {
     return octree.toByteArray();
   }
 
   public void setRenderThreadCount(int threads) {
     config.renderThreads = threads;
+  }
+
+  public void dispose() {
+    scene = null;
+    octree = null;
   }
 }
