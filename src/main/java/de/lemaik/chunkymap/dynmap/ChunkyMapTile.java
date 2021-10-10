@@ -51,6 +51,7 @@ public class ChunkyMapTile extends HDMapTile {
 
   @Override
   public boolean render(MapChunkCache mapChunkCache, String mapName) {
+    final long startTimestamp = System.currentTimeMillis();
     IsoHDPerspective perspective = (IsoHDPerspective) this.perspective;
 
     final int scaled = (boostzoom > 0 && MarkerAPIImpl
@@ -146,6 +147,7 @@ public class ChunkyMapTile extends HDMapTile {
           mtile.getWriteLock();
           try {
             if (!mtile.matchesHashCode(crc)) {
+              mtile.write(crc, image, startTimestamp);
               mapManager.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
               tileUpdated = true;
             }
