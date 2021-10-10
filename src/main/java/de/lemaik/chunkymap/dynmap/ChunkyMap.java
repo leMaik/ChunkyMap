@@ -43,6 +43,8 @@ public class ChunkyMap extends HDMap {
   private final Renderer renderer;
   private File defaultTexturepackPath;
   private File texturepackPath;
+  private File worldPath;
+  private final Object worldPathLock = new Object();
   private JsonObject templateScene;
   private final int chunkPadding;
   private final boolean requeueFailedTiles;
@@ -206,5 +208,15 @@ public class ChunkyMap extends HDMap {
     if (this.templateScene != null) {
       scene.importFromJson(templateScene);
     }
+  }
+
+  File getWorldFolder(DynmapWorld world) {
+    if (worldPath == null) {
+      // Fixes a ConcurrentModificationException, see https://github.com/leMaik/ChunkyMap/issues/30
+      synchronized (worldPathLock) {
+        worldPath = Bukkit.getWorld(world.getRawName()).getWorldFolder();
+      }
+    }
+    return worldPath;
   }
 }

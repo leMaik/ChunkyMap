@@ -73,7 +73,7 @@ public class ChunkyMapTile extends HDMapTile {
       renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
       renderer.render(context, map.getTexturepackPath(), (scene) -> {
         org.bukkit.World bukkitWorld = Bukkit.getWorld(world.getRawName());
-        World chunkyWorld = World.loadWorld(bukkitWorld.getWorldFolder(),
+        World chunkyWorld = World.loadWorld(map.getWorldFolder(world),
             getChunkyDimension(bukkitWorld.getEnvironment()), LoggedWarnings.SILENT);
         // Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
         map.applyTemplateScene(scene);
@@ -114,7 +114,7 @@ public class ChunkyMapTile extends HDMapTile {
             try {
               Field worldPath = Scene.class.getDeclaredField("worldPath");
               worldPath.setAccessible(true);
-              worldPath.set(scene, bukkitWorld.getWorldFolder().getAbsolutePath());
+              worldPath.set(scene, map.getWorldFolder(world).getAbsolutePath());
               Field worldDimension = Scene.class.getDeclaredField("worldDimension");
               worldDimension.setAccessible(true);
               worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
