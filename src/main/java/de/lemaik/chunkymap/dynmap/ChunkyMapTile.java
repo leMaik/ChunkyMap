@@ -5,17 +5,17 @@ import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
+import java.awt.image.DataBufferInt;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.World.Environment;
 import org.dynmap.Client.Tile;
-import org.dynmap.DynmapChunk;
 import org.dynmap.DynmapWorld;
 import org.dynmap.MapManager;
 import org.dynmap.MapTile;
@@ -38,23 +38,19 @@ import se.llbit.util.TaskTracker;
 
 public class ChunkyMapTile extends HDMapTile {
 
-  private final ChunkyMap map;
-
-  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, ChunkyMap map, int tx,
-      int ty) {
-    super(world, perspective, tx, ty, map.getBoostZoom());
-    this.map = map;
+  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, int tx, int ty,
+      int boostzoom) {
+    super(world, perspective, tx, ty, boostzoom);
   }
 
   public ChunkyMapTile(DynmapWorld world, String parm) throws Exception {
     // Do not remove this constructor! It is used by Dynmap to de-serialize tiles from the queue.
     // The serialization happens in the inherited saveTileData() method.
     super(world, parm);
-    map = (ChunkyMap) world.maps.stream().filter(m -> m instanceof ChunkyMap).findFirst().get();
   }
 
   @Override
-  public boolean render(MapChunkCache mapChunkCache, String s) {
+  public boolean render(MapChunkCache mapChunkCache, String mapName) {
     IsoHDPerspective perspective = (IsoHDPerspective) this.perspective;
 
     final int scaled = (boostzoom > 0 && MarkerAPIImpl
@@ -62,6 +58,11 @@ public class ChunkyMapTile extends HDMapTile {
             128.0D)) ? boostzoom : 0;
 
     // Mark the tiles we're going to render as validated
+    ChunkyMap map = (ChunkyMap) world.maps.stream()
+        .filter(m -> m instanceof ChunkyMap && (mapName == null || m.getName().equals(mapName))
+            && ((ChunkyMap) m).getPerspective() == perspective
+            && ((ChunkyMap) m).getBoostZoom() == boostzoom)
+        .findFirst().get();
     MapTypeState mts = world.getMapState(map);
     if (mts != null) {
       mts.validateTile(tx, ty);
@@ -137,22 +138,28 @@ public class ChunkyMapTile extends HDMapTile {
         MapStorage var52 = world.getMapStorage();
         MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, ImageVariant.STANDARD);
         MapManager mapManager = MapManager.mapman;
+        boolean tileUpdated = false;
         if (mapManager != null) {
+          DataBufferInt dataBuffer = (DataBufferInt) image.getRaster().getDataBuffer();
+          int[] data = dataBuffer.getData();
+          long crc = MapStorage.calculateImageHashCode(data, 0, data.length);
           mtile.getWriteLock();
           try {
-            mtile.write(image.hashCode(), image);
-            mapManager.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
+            if (!mtile.matchesHashCode(crc)) {
+              mapManager.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
+              tileUpdated = true;
+            }
           } finally {
             mtile.releaseWriteLock();
           }
           mapManager.updateStatistics(this, map.getPrefix(), true, true, false);
         }
-        return true;
+        return tileUpdated;
       }).get();
       return true;
     } catch (Exception e) {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .log(Level.WARNING, "Rendering tile failed", e);
+          .log(Level.WARNING, "Rendering tile " + tx + "_" + ty + " failed", e);
 
       if (map.getRequeueFailedTiles()) {
         // Re-queue the failed tile
@@ -188,13 +195,8 @@ public class ChunkyMapTile extends HDMapTile {
   }
 
   @Override
-  public List<DynmapChunk> getRequiredChunks() {
-    return map.getRequiredChunks(this);
-  }
-
-  @Override
   public MapTile[] getAdjecentTiles() {
-    return map.getAdjecentTiles(this);
+    return ChunkyMap.getAdjecentTilesOfTile(this, perspective);
   }
 
   public int hashCode() {
