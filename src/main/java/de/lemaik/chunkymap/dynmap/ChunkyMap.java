@@ -20,12 +20,12 @@ import okio.BufferedSink;
 import okio.Okio;
 import org.bukkit.Bukkit;
 import org.dynmap.ConfigurationNode;
-import org.dynmap.DynmapChunk;
 import org.dynmap.DynmapCore;
 import org.dynmap.DynmapWorld;
 import org.dynmap.MapTile;
 import org.dynmap.MapType;
 import org.dynmap.hdmap.HDMap;
+import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
 import org.dynmap.utils.TileFlags;
 import se.llbit.chunky.renderer.scene.Scene;
@@ -128,7 +128,7 @@ public class ChunkyMap extends HDMap {
 
   @Override
   public void addMapTiles(List<MapTile> list, DynmapWorld world, int tx, int ty) {
-    list.add(new ChunkyMapTile(world, getPerspective(), this, tx, ty));
+    list.add(new ChunkyMapTile(world, getPerspective(), tx, ty, getBoostZoom()));
   }
 
   public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int x, int y, int z) {
@@ -142,25 +142,24 @@ public class ChunkyMap extends HDMap {
 
   @Override
   public MapTile[] getAdjecentTiles(MapTile tile) {
+    return getAdjecentTilesOfTile(tile, getPerspective());
+  }
+
+  public static MapTile[] getAdjecentTilesOfTile(MapTile tile, HDPerspective perspective) {
     ChunkyMapTile t = (ChunkyMapTile) tile;
     DynmapWorld w = t.getDynmapWorld();
     int x = t.tileOrdinalX();
     int y = t.tileOrdinalY();
 
     return new MapTile[]{
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y),
-        new ChunkyMapTile(w, getPerspective(), this, x, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y)};
-  }
-
-  @Override
-  public List<DynmapChunk> getRequiredChunks(MapTile mapTile) {
-    return getPerspective().getRequiredChunks(mapTile);
+        new ChunkyMapTile(w, perspective, x - 1, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x - 1, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x - 1, y, t.boostzoom)};
   }
 
   @Override
