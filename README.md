@@ -167,6 +167,7 @@ worlds:
 
 - Craften Server: [Lobby Dynmap](https://play.craften.de/maps/index.html?worldname=world&mapname=rs&zoom=5&x=594&y=64&z=-420)
 - Greenfield City Minecraft: [Greenfield Dynmap](http://map.greenfieldmc.net/?worldname=world&mapname=chunky&zoom=5)
+- BoilerCraft: [Purdue University](https://map.boilercraft.com/purdue/)
 - _Using ChunkyMap on your server? Submit a PR to get it on this list._
 
 ## Building ChunkyMap
