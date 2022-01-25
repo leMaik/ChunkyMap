@@ -39,11 +39,17 @@ The maps can be configured by adding options to the map's section in the `world.
 | `chunkyCpuLoad`                  | Percentage of CPU time to use, per Chunky thread. Note that this only throttles the CPU usage during rendering, not during scene loading or post processing.                     | 100     |
 | `texturepack`                    | Texturepack path, relative to `plugins/dynmap`. Use this option to specify a texturepack for a map. The texturepack in Dynmap's `configuration.txt` is ignored by ChunkyMap.     | _None_  |
 | `chunkPadding`                   | Radius of additional chunks to be loaded around each chunk that is required to render a tile of the map. This can be used to reduce artifacts caused by shadows and reflections. | 0       |
+| `requeueFailedTiles`             | Put tiles that failed to render back into the tile queue.                                                                                                                        | true    |
 | `templateScene`                  | Path to a Chunky scene file (JSON), relative to `plugins/dynmap`. Use this option to customize the scene that is used for rendering the tiles, e.g. to change the water color.   | _None_  |
 | `texturepackVersion`             | The Minecraft version that should be used as fallback textures                                                                                                                   | 1.16.2  |
-| `denoiser.enabled`               | Enable denoising using [Intel Open Image Denoise](https://openimagedenoise.github.io/). Only works on Linux                                                                      | false   |
-| `denoiser.albedoSamplesPerPixel` | Samples per pixel for the albedo map. Setting this to 0 will disable the albedo and normal map.                                                                                  | 4       |
-| `denoiser.normalSamplesPerPixel` | Samples per pixel for the normal map. Setting this to 0 will disable the normal map.                                                                                             | 4       |
+| `denoiser/enabled`               | Enable denoising using [Intel Open Image Denoise](https://openimagedenoise.github.io/). Only works on Linux                                                                      | false   |
+| `denoiser/albedoSamplesPerPixel` | Samples per pixel for the albedo map. Setting this to 0 will disable the albedo and normal map.                                                                                  | 4       |
+| `denoiser/normalSamplesPerPixel` | Samples per pixel for the normal map. Setting this to 0 will disable the normal map.                                                                                             | 4       |
+| `chunkycloud/enabled`            | Render tiles using the Chunky Cloud render service                                                                                                                               | false   |
+| `chunkycloud/apiKey`             | API Key for the Chunky Cloud render service                                                                                                                                      |         |
+| `chunkycloud/initializeLocally`  | Generate the octree locally. Less data to upload, faster render times but will use a lot of CPU locally.                                                                         | true    |
+
+:warning: A forward slash (`/`) in the option name means that the right part is a nested option and needs to be put into the next line and indented properly. Take a look at the examples below.
 
 ## Example configurations
 
@@ -97,6 +103,25 @@ perspectives:
     inclination: 30
     scale: 16
     maximumheight: 100 # the bedrock layer is at 127
+```
+
+### Rendering ChunkyMap on ChunkyCloud
+
+`plugins/dynmap/worlds.txt`:
+
+```yml
+worlds:
+  - name: world
+    maps:
+      - class: de.lemaik.chunkymap.dynmap.ChunkyMap
+        name: chunky
+        title: Chunky
+        perspective: iso_SE_30_hires
+        samplesPerPixel: 20
+        chunkycloud:
+          enabled: true
+          initializeLocally: false
+          apiKey: your-secret-api-key
 ```
 
 ### Customizing the look of a map with template scenes

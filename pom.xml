@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>de.lemaik.chunkymap</groupId>
   <artifactId>ChunkyMap</artifactId>
-  <version>2.5.2</version>
+  <version>2.6.0-pre3</version>
 
   <licenses>
     <license>
@@ -19,7 +17,7 @@
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <chunky.version>2.3.0-30-g82f6ab17</chunky.version>
+    <chunky.version>2.3.0-32-g9623108f</chunky.version>
   </properties>
 
   <repositories>
@@ -64,16 +62,22 @@
       <version>3.2</version>
     </dependency>
     <dependency>
-      <!-- this is an older version, but 3.0-SNAPSHOT can't be installed and this works, too -->
       <groupId>us.dynmap</groupId>
       <artifactId>DynmapCore</artifactId>
-      <version>2.3</version>
+      <version>3.2.1</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <!-- downloading fails -->
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>3.4.1</version>
+      <version>3.14.9</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
