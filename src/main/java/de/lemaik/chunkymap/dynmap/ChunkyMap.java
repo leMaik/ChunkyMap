@@ -37,7 +37,7 @@ import se.llbit.json.JsonParser;
  */
 public class ChunkyMap extends HDMap {
 
-  private static final String DEFAULT_TEXTUREPACK_VERSION = "1.19.2";
+  private static final String DEFAULT_TEXTUREPACK_VERSION;
   public final DynmapCameraAdapter cameraAdapter;
   private final Renderer renderer;
   private File defaultTexturepackPath;
@@ -47,6 +47,21 @@ public class ChunkyMap extends HDMap {
   private JsonObject templateScene;
   private final int chunkPadding;
   private final boolean requeueFailedTiles;
+
+  static {
+    String bukkitVersion = Bukkit.getServer().getVersion();
+    String texturePackVersion = "1.19.2";
+    int start = bukkitVersion.indexOf("(MC:");
+    if (start >= 0) {
+      String minecraftVersion = bukkitVersion.substring(start + 5);
+      start = minecraftVersion.indexOf(")");
+      if(start >= 0) {
+        minecraftVersion = minecraftVersion.substring(0, start).trim();
+        texturePackVersion = minecraftVersion;
+      }
+    }
+    DEFAULT_TEXTUREPACK_VERSION = texturePackVersion;
+  }
 
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
