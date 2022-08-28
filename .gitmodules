@@ -1,8 +1,0 @@
-[submodule "vendor/chunky"]
-	path = vendor/chunky
-	url = https://github.com/leMaik/chunky
-[submodule "."]
-	branch = remove-static-registries
-[submodule "vendor/chunky-denoiser"]
-	path = vendor/chunky-denoiser
-	url = https://github.com/chunky-dev/chunky-denoiser

@@ -27,7 +27,6 @@ import org.dynmap.MapType;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
-import org.dynmap.utils.TileFlags;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.json.JsonNumber;
 import se.llbit.json.JsonObject;
@@ -38,7 +37,7 @@ import se.llbit.json.JsonParser;
  */
 public class ChunkyMap extends HDMap {
 
-  private static final String DEFAULT_TEXTUREPACK_VERSION = "1.16.2";
+  private static final String DEFAULT_TEXTUREPACK_VERSION = "1.19.2";
   public final DynmapCameraAdapter cameraAdapter;
   private final Renderer renderer;
   private File defaultTexturepackPath;
@@ -128,16 +127,8 @@ public class ChunkyMap extends HDMap {
 
   @Override
   public void addMapTiles(List<MapTile> list, DynmapWorld world, int tx, int ty) {
-    list.add(new ChunkyMapTile(world, getPerspective(), tx, ty, getBoostZoom()));
-  }
-
-  public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int x, int y, int z) {
-    return getPerspective().getTileCoords(world, x, y, z);
-  }
-
-  public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int minx, int miny, int minz,
-      int maxx, int maxy, int maxz) {
-    return getPerspective().getTileCoords(world, minx, miny, minz, maxx, maxy, maxz);
+    MapTile tile = new ChunkyMapTile(world, getPerspective(), tx, ty, getBoostZoom(), getTileScale());
+    list.add(tile);
   }
 
   @Override
@@ -152,14 +143,14 @@ public class ChunkyMap extends HDMap {
     int y = t.tileOrdinalY();
 
     return new MapTile[]{
-        new ChunkyMapTile(w, perspective, x - 1, y - 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x - 1, y + 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x + 1, y - 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x + 1, y + 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x, y - 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x + 1, y, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x, y + 1, t.boostzoom),
-        new ChunkyMapTile(w, perspective, x - 1, y, t.boostzoom)};
+        new ChunkyMapTile(w, perspective, x - 1, y - 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x - 1, y + 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x + 1, y - 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x + 1, y + 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x, y - 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x + 1, y, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x, y + 1, t.boostzoom, t.tilescale),
+        new ChunkyMapTile(w, perspective, x - 1, y, t.boostzoom, t.tilescale)};
   }
 
   @Override
@@ -217,5 +208,11 @@ public class ChunkyMap extends HDMap {
       }
     }
     return worldPath;
+  }
+
+  private static final ImageVariant[] variants = new ImageVariant[]{ImageVariant.STANDARD};
+  @Override
+  public ImageVariant[] getVariants() {
+    return variants;
   }
 }
