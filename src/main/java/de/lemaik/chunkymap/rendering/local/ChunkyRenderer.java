@@ -1,8 +1,8 @@
 package de.lemaik.chunkymap.rendering.local;
 
-import de.lemaik.chunky.denoiser.AlbedoTracer;
-import de.lemaik.chunky.denoiser.CombinedRayTracer;
-import de.lemaik.chunky.denoiser.NormalTracer;
+import de.lemaik.chunky.denoiser.DenoisedPathTracingRenderer;
+import de.lemaik.chunky.denoiser.DenoiserSettings;
+import de.lemaik.chunky.denoiser.OidnBinaryDenoiser;
 import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.RenderException;
@@ -23,7 +23,9 @@ import net.time4tea.oidn.Oidn.DeviceType;
 import net.time4tea.oidn.OidnDevice;
 import net.time4tea.oidn.OidnFilter;
 import net.time4tea.oidn.OidnImages;
+import org.bukkit.Bukkit;
 import se.llbit.chunky.PersistentSettings;
+import se.llbit.chunky.main.Chunky;
 import se.llbit.chunky.renderer.Postprocess;
 import se.llbit.chunky.renderer.RenderManager;
 import se.llbit.chunky.renderer.SnapshotControl;
@@ -47,6 +49,12 @@ public class ChunkyRenderer implements Renderer {
   private final int normalTargetSpp;
   private final int threads;
   private final int cpuLoad;
+
+  static {
+    Chunky.addRenderer(new DenoisedPathTracingRenderer(
+            new DenoiserSettings(), new Oidn4jDenoiser(),
+            "DenoisedPathTracer", "DenoisedPathTracer", "DenoisedPathTracer", new PathTracer()));
+  }
 
   public ChunkyRenderer(int targetSpp, boolean enableDenoiser, int albedoTargetSpp,
       int normalTargetSpp, int threads, int cpuLoad) {
@@ -93,16 +101,14 @@ public class ChunkyRenderer implements Renderer {
       previousTexturepacks = texturepackPaths;
     }
 
-    CombinedRayTracer combinedRayTracer = new CombinedRayTracer();
-    context.getChunky().setRayTracerFactory(() -> combinedRayTracer);
     context.setRenderThreadCount(threads);
-    RenderManager renderer = new RenderManager(context, false);
-    renderer.setCPULoad(cpuLoad);
+    RenderManager renderManager = context.getChunky().getRenderController().getRenderManager();
+    renderManager.setCPULoad(cpuLoad);
 
-    SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
+    SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderManager);
     initializeScene.accept(sceneManager.getScene());
-    renderer.setSceneProvider(sceneManager);
-    renderer.setSnapshotControl(new SnapshotControl() {
+    renderManager.setSceneProvider(sceneManager);
+    renderManager.setSnapshotControl(new SnapshotControl() {
       @Override
       public boolean saveSnapshot(Scene scene, int nextSpp) {
         return false;
@@ -114,98 +120,34 @@ public class ChunkyRenderer implements Renderer {
       }
     });
 
-    AtomicReference<FloatBuffer> albedo = new AtomicReference<>();
-    AtomicReference<FloatBuffer> normal = new AtomicReference<>();
-
-    renderer.setOnRenderCompleted((time, sps) -> {
-      try {
-        if (combinedRayTracer.getRayTracer() instanceof PathTracer) {
-          result.complete(getImage(sceneManager.getScene(), albedo.get(), normal.get()));
-          renderer.interrupt();
-        } else if (combinedRayTracer.getRayTracer() instanceof AlbedoTracer) {
-          Scene scene = renderer.getBufferedScene();
-          double[] samples = scene.getSampleBuffer();
-          FloatBuffer albedoBuffer = Oidn.Companion.allocateBuffer(sceneManager.getScene().width,
-              sceneManager.getScene().height);
-          for (int y = 0; y < scene.height; y++) {
-            for (int x = 0; x < scene.width; x++) {
-              albedoBuffer.put((y * scene.width + x) * 3,
-                  (float) Math.min(1.0, samples[(y * scene.width + x) * 3 + 0]));
-              albedoBuffer.put((y * scene.width + x) * 3 + 1,
-                  (float) Math.min(1.0, samples[(y * scene.width + x) * 3 + 1]));
-              albedoBuffer.put((y * scene.width + x) * 3 + 2,
-                  (float) Math.min(1.0, samples[(y * scene.width + x) * 3 + 2]));
-            }
-          }
-          albedo.set(albedoBuffer);
-
-          combinedRayTracer.setRayTracer(new PathTracer());
-          sceneManager.getScene().haltRender();
-          sceneManager.getScene().setTargetSpp(targetSpp);
-          sceneManager.getScene().startHeadlessRender();
-        } else if (combinedRayTracer.getRayTracer() instanceof NormalTracer) {
-          Scene scene = renderer.getBufferedScene();
-          double[] samples = scene.getSampleBuffer();
-          FloatBuffer normalBuffer = Oidn.Companion.allocateBuffer(sceneManager.getScene().width,
-              sceneManager.getScene().height);
-          for (int y = 0; y < scene.height; y++) {
-            for (int x = 0; x < scene.width; x++) {
-              normalBuffer.put((y * scene.width + x) * 3,
-                  (float) samples[(y * scene.width + x) * 3 + 0]);
-              normalBuffer.put((y * scene.width + x) * 3 + 1,
-                  (float) samples[(y * scene.width + x) * 3 + 1]);
-              normalBuffer.put((y * scene.width + x) * 3 + 2,
-                  (float) samples[(y * scene.width + x) * 3 + 2]);
-            }
-          }
-          normal.set(normalBuffer);
-
-          combinedRayTracer.setRayTracer(new AlbedoTracer());
-          sceneManager.getScene().haltRender();
-          sceneManager.getScene().setTargetSpp(albedoTargetSpp);
-          sceneManager.getScene().startHeadlessRender();
-        }
-      } catch (ReflectiveOperationException e) {
-        result
-            .completeExceptionally(new RenderException("Could not get final image from Chunky", e));
-      }
-    });
-
     try {
-      if (enableDenoiser && normalTargetSpp > 0) {
-        combinedRayTracer.setRayTracer(new NormalTracer());
-        sceneManager.getScene().setTargetSpp(normalTargetSpp);
-      } else if (enableDenoiser && albedoTargetSpp > 0) {
-        combinedRayTracer.setRayTracer(new AlbedoTracer());
-        sceneManager.getScene().setTargetSpp(albedoTargetSpp);
-      } else {
-        sceneManager.getScene().setTargetSpp(targetSpp);
-      }
-
-      sceneManager.getScene().startHeadlessRender();
-      renderer.start();
-      renderer.join();
-      renderer.shutdown();
-    } catch (InterruptedException e) {
+      sceneManager.getScene().setTargetSpp(targetSpp);
+      sceneManager.getScene().startRender();
+      renderManager.start();
+      renderManager.join();
+      result.complete(getImage(sceneManager.getScene()));
+    } catch (InterruptedException | ReflectiveOperationException e) {
       result.completeExceptionally(new RenderException("Rendering failed", e));
     } finally {
-      renderer.shutdown();
+      renderManager.shutdown();
     }
 
     return result;
   }
 
-  private BufferedImage getImage(Scene scene, FloatBuffer albedo, FloatBuffer normal)
+  private BufferedImage getImage(Scene scene)
       throws ReflectiveOperationException {
     if (enableDenoiser) {
       double[] samples = scene.getSampleBuffer();
-      FloatBuffer buffer = Oidn.Companion.allocateBuffer(scene.width, scene.height);
 
+      // TODO re-enable post-processing when denoising
       // TODO use multiple threads for post-processing
+      /*
       for (int y = 0; y < scene.height; y++) {
         for (int x = 0; x < scene.width; x++) {
           double[] result = new double[3];
-          if (scene.getPostprocess() != Postprocess.NONE) {
+          if (!scene.getPostProcessingFilter().getId().equals("NONE")) {
+            scene.getPostProcessingFilter().processFrame(scene.width, scene.height, result);
             scene.postProcessPixel(x, y, result);
           } else {
             result[0] = samples[(y * scene.width + x) * 3 + 0];
@@ -217,24 +159,12 @@ public class ChunkyRenderer implements Renderer {
           buffer.put((y * scene.width + x) * 3 + 2, (float) Math.min(1.0, result[2]));
         }
       }
-
-      Oidn oidn = new Oidn();
-      try (OidnDevice device = oidn.newDevice(DeviceType.DEVICE_TYPE_DEFAULT)) {
-        try (OidnFilter filter = device.raytraceFilter()) {
-          filter.setFilterImage(buffer, buffer, scene.width, scene.height);
-          if (albedo != null) {
-            // albedo is required if normal is set
-            filter.setAdditionalImages(albedo, normal, scene.width, scene.height);
-          }
-          filter.commit();
-          filter.execute();
-        }
-      }
+      */
 
       BufferedImage renderedImage = OidnImages.Companion
           .newBufferedImage(scene.width, scene.height);
-      for (int i = 0; i < buffer.capacity(); i++) {
-        renderedImage.getRaster().getDataBuffer().setElemFloat(i, buffer.get(i));
+      for (int i = 0; i < samples.length; i++) {
+        renderedImage.getRaster().getDataBuffer().setElemDouble(i, samples[i]);
       }
       BufferedImage imageInIntPixelLayout = new BufferedImage(scene.width, scene.height,
           BufferedImage.TYPE_INT_ARGB);
@@ -246,14 +176,14 @@ public class ChunkyRenderer implements Renderer {
     } else {
       Class<Scene> sceneClass = Scene.class;
       Method computeAlpha = sceneClass
-          .getDeclaredMethod("computeAlpha", new Class[]{TaskTracker.class, int.class});
+          .getDeclaredMethod("computeAlpha", new Class[]{TaskTracker.class});
       computeAlpha.setAccessible(true);
-      computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE, threads);
+      computeAlpha.invoke(scene, SilentTaskTracker.INSTANCE);
 
       Field finalized = sceneClass.getDeclaredField("finalized");
       finalized.setAccessible(true);
       if (!finalized.getBoolean(scene)) {
-        scene.postProcessFrame(SilentTaskTracker.INSTANCE, threads);
+        scene.postProcessFrame(SilentTaskTracker.INSTANCE);
       }
 
       Field backBuffer = sceneClass.getDeclaredField("backBuffer");

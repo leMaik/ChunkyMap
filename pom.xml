@@ -17,7 +17,7 @@
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <chunky.version>2.3.0-32-g9623108f</chunky.version>
+    <chunky.version>2.4.3-20220828.221432-95</chunky.version>
   </properties>
 
   <repositories>
@@ -28,10 +28,6 @@
     <repository>
       <id>spigot-repo</id>
       <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-    </repository>
-    <repository>
-      <id>dynmap-repo</id>
-      <url>http://repo.mikeprimm.com/</url>
     </repository>
     <repository>
       <id>wertarbyte-repo</id>
@@ -45,9 +41,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>1.16.1-R0.1-SNAPSHOT</version>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot-api</artifactId>
+      <version>1.19.2-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -64,7 +60,7 @@
     <dependency>
       <groupId>us.dynmap</groupId>
       <artifactId>DynmapCore</artifactId>
-      <version>3.2.1</version>
+      <version>3.4.0</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -98,7 +94,7 @@
     <dependency>
       <groupId>de.lemaik</groupId>
       <artifactId>chunky-denoiser</artifactId>
-      <version>0.1.3-SNAPSHOT</version>
+      <version>0.5.0</version>
     </dependency>
   </dependencies>
 
@@ -130,45 +126,6 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <version>2.5.2</version>
-        <executions>
-          <execution>
-            <id>install-chunky</id>
-            <phase>clean</phase>
-            <configuration>
-              <file>${basedir}/vendor/chunky/build/chunky-core-${chunky.version}.jar</file>
-              <repositoryLayout>default</repositoryLayout>
-              <groupId>se.llbit</groupId>
-              <artifactId>chunky-core</artifactId>
-              <version>${chunky.version}</version>
-              <packaging>jar</packaging>
-              <generatePom>true</generatePom>
-            </configuration>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>install-chunky-denoiser</id>
-            <phase>clean</phase>
-            <configuration>
-              <file>${basedir}/vendor/chunky-denoiser/build/libs/chunky-denoiser-chunky2.jar</file>
-              <repositoryLayout>default</repositoryLayout>
-              <groupId>de.lemaik</groupId>
-              <artifactId>chunky-denoiser</artifactId>
-              <version>0.1.3-SNAPSHOT</version>
-              <packaging>jar</packaging>
-              <generatePom>true</generatePom>
-            </configuration>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
     <resources>

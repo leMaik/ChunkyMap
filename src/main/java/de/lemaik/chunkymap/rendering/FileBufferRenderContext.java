@@ -4,6 +4,8 @@ package de.lemaik.chunkymap.rendering;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+
 import se.llbit.chunky.main.Chunky;
 import se.llbit.chunky.main.ChunkyOptions;
 import se.llbit.chunky.renderer.RenderContext;
@@ -19,6 +21,13 @@ public class FileBufferRenderContext extends RenderContext {
 
   public FileBufferRenderContext() {
     super(new Chunky(ChunkyOptions.getDefaults()));
+    try {
+      Field headless  = Chunky.class.getDeclaredField("headless");
+      headless.setAccessible(true);
+      headless.set(this.getChunky(), true);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

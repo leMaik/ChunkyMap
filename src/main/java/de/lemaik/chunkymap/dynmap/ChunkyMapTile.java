@@ -6,21 +6,16 @@ import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
 import java.awt.image.DataBufferInt;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.World.Environment;
+import org.dynmap.*;
 import org.dynmap.Client.Tile;
-import org.dynmap.DynmapWorld;
-import org.dynmap.MapManager;
-import org.dynmap.MapTile;
 import org.dynmap.MapType.ImageVariant;
-import org.dynmap.MapTypeState;
 import org.dynmap.hdmap.HDMapTile;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -37,10 +32,8 @@ import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
 public class ChunkyMapTile extends HDMapTile {
-
-  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, int tx, int ty,
-      int boostzoom) {
-    super(world, perspective, tx, ty, boostzoom);
+  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, int tx, int ty, int boostzoom, int tilescale) {
+    super(world, perspective, tx, ty, boostzoom, tilescale);
   }
 
   public ChunkyMapTile(DynmapWorld world, String parm) throws Exception {
@@ -83,18 +76,31 @@ public class ChunkyMapTile extends HDMapTile {
         scene.setCanvasSize(128 * (1 << scaled), 128 * (1 << scaled));
         scene.setTransparentSky(true);
         scene.setYClipMin((int) perspective.minheight);
-        if (perspective.maxheight > 0) {
-          scene.setYClipMax((int) perspective.maxheight);
+        if (perspective.minheight == -2.147483648E9D) {
+          scene.setYClipMin(world.minY);
+        }
+        scene.setYClipMax((int) perspective.maxheight);
+        if (perspective.maxheight == -2.147483648E9D) {
+          if (world.isNether()) {
+            scene.setYClipMax(127);
+          } else {
+            scene.setYClipMax(world.worldheight - 1);
+          }
         }
         map.cameraAdapter.apply(scene.camera(), tx, ty, map.getMapZoomOutLevels(),
             world.getExtraZoomOutLevels());
 
         if (renderer instanceof RemoteRenderer) {
           if (((RemoteRenderer) renderer).shouldInitializeLocally()) {
-            scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
-                perspective.getRequiredChunks(this).stream()
-                    .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                    .collect(Collectors.toSet()));
+              Set<ChunkPosition> chunks = perspective.getRequiredChunks(this).stream()
+                      .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                      .collect(Collectors.toSet());
+              Bukkit.getLogger().info("loading " + chunks.size()+ " chunks");
+              scene.setOctreeImplementation("PACKED");
+            scene.loadChunks(new TaskTracker((task, done, start, target) -> {
+              Bukkit.getLogger().info(task + " ("+done+"/"+target+")");
+            }), chunkyWorld, chunks);
+            Bukkit.getLogger().info("loaded " + chunks.size()+ " chunks");
             scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
             try {
               scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
@@ -130,10 +136,10 @@ public class ChunkyMapTile extends HDMapTile {
             }
           }
         } else {
-          scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
-              perspective.getRequiredChunks(this).stream()
+          Set<ChunkPosition> chunks = perspective.getRequiredChunks(this).stream()
                   .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                  .collect(Collectors.toSet()));
+                  .collect(Collectors.toSet());
+          scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld, chunks);
         }
       }).thenApply((image) -> {
         MapStorage var52 = world.getMapStorage();
@@ -201,17 +207,14 @@ public class ChunkyMapTile extends HDMapTile {
     return ChunkyMap.getAdjecentTilesOfTile(this, perspective);
   }
 
-  public int hashCode() {
-    return this.tx ^ this.ty ^ this.perspective.hashCode() ^ this.world.hashCode() ^ this.boostzoom;
+  @Override
+  public boolean equals(HDMapTile o) {
+    return o instanceof ChunkyMapTile && o.tx == this.tx && o.ty == this.ty && this.perspective == o.perspective && ((ChunkyMapTile) o).world == this.world && o.boostzoom == this.boostzoom;
   }
 
-  public boolean equals(Object obj) {
-    return obj instanceof ChunkyMapTile && this.equals((ChunkyMapTile) obj);
-  }
-
-  public boolean equals(ChunkyMapTile o) {
-    return o.tx == this.tx && o.ty == this.ty && this.perspective == o.perspective
-        && o.world == this.world && o.boostzoom == this.boostzoom;
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof ChunkyMapTile&& ((ChunkyMapTile) o).tx == this.tx && ((ChunkyMapTile) o).ty == this.ty && this.perspective == ((ChunkyMapTile) o).perspective && ((ChunkyMapTile) o).world == this.world && ((ChunkyMapTile) o).boostzoom == this.boostzoom;
   }
 
   @Override
@@ -231,6 +234,11 @@ public class ChunkyMapTile extends HDMapTile {
 
   @Override
   public boolean isBlockTypeDataNeeded() {
-    return true;
+    return false;
+  }
+
+  @Override
+  protected String saveTileData() {
+    return String.format("%d,%d,%s,%d", this.tx, this.ty, this.perspective.getName(), this.boostzoom);
   }
 }
