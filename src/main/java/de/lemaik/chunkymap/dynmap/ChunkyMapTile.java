@@ -66,7 +66,7 @@ public class ChunkyMapTile extends HDMapTile {
     try {
       Renderer renderer = map.getRenderer();
       renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
-      renderer.render(context, map.getTexturepackPath(), (scene) -> {
+      renderer.render(context, map.getResourcepackPaths(), (scene) -> {
         org.bukkit.World bukkitWorld = Bukkit.getWorld(world.getRawName());
         World chunkyWorld = World.loadWorld(map.getWorldFolder(world),
             getChunkyDimension(bukkitWorld.getEnvironment()), LoggedWarnings.SILENT);

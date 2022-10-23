@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -41,7 +42,7 @@ public class ChunkyMap extends HDMap {
   public final DynmapCameraAdapter cameraAdapter;
   private final Renderer renderer;
   private File defaultTexturepackPath;
-  private File texturepackPath;
+  private File[] resourcepackPaths;
   private File worldPath;
   private final Object worldPathLock = new Object();
   private JsonObject templateScene;
@@ -111,11 +112,16 @@ public class ChunkyMap extends HDMap {
       }
     }
 
-    if (config.containsKey("texturepack")) {
-      this.texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
-          .resolve(config.getString("texturepack"))
-          .toFile();
+    Path dynmapDataPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath();
+    if (config.containsKey("resourcepacks")) {
+      this.resourcepackPaths = config.getList("resourcepacks").stream()
+          .map(path -> dynmapDataPath.resolve(path.toString()).toFile()).toArray(File[]::new);
+    } else if (config.containsKey("texturepack")) {
+      this.resourcepackPaths = new File[] { dynmapDataPath
+              .resolve(config.getString("texturepack"))
+              .toFile() };
     } else {
+      this.resourcepackPaths = new File[0];
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
               "The Minecraft " + texturepackVersion + " textures will be used.");
@@ -197,8 +203,8 @@ public class ChunkyMap extends HDMap {
     return defaultTexturepackPath;
   }
 
-  File getTexturepackPath() {
-    return texturepackPath;
+  File[] getResourcepackPaths() {
+    return resourcepackPaths;
   }
 
   int getChunkPadding() {
