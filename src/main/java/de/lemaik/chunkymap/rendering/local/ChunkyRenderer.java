@@ -69,9 +69,6 @@ public class ChunkyRenderer implements Renderer {
   }
 
   private String getTexturepackPaths(File[] texturepacks) {
-    if (texturepacks == null || texturepacks.length == 0) {
-      return "";
-    }
     StringBuilder texturepackPaths = new StringBuilder();
     for (File texturepack : texturepacks) {
       if (texturepackPaths.length() > 0) {
