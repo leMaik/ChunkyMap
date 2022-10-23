@@ -33,10 +33,6 @@
       <id>wertarbyte-repo</id>
       <url>https://repo.wertarbyte.com</url>
     </repository>
-    <repository>
-      <id>local-libs</id>
-      <url>file://${basedir}/lib</url>
-    </repository>
   </repositories>
 
   <dependencies>
