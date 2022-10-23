@@ -16,11 +16,11 @@ public interface Renderer {
    * Renders a scene using the given context.
    *
    * @param context         render context
-   * @param texturepack     the texturepack
+   * @param texturepacks     the texturepacks
    * @param initializeScene function that initializes the scene
    * @return future with the rendered image
    */
-  CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
+  CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File[] texturepacks,
       Consumer<Scene> initializeScene)
       throws IOException;
 

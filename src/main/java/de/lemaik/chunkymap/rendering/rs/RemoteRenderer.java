@@ -37,7 +37,7 @@ public class RemoteRenderer implements Renderer {
   }
 
   @Override
-  public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
+  public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File[] texturepacks,
       Consumer<Scene> initializeScene) throws IOException {
     Scene scene = context.getChunky().getSceneFactory().newScene();
     initializeScene.accept(scene);

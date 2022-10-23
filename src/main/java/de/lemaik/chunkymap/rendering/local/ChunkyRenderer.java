@@ -2,31 +2,14 @@ package de.lemaik.chunkymap.rendering.local;
 
 import de.lemaik.chunky.denoiser.DenoisedPathTracingRenderer;
 import de.lemaik.chunky.denoiser.DenoiserSettings;
-import de.lemaik.chunky.denoiser.OidnBinaryDenoiser;
 import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.RenderException;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.nio.FloatBuffer;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import net.time4tea.oidn.Oidn;
-import net.time4tea.oidn.Oidn.DeviceType;
-import net.time4tea.oidn.OidnDevice;
-import net.time4tea.oidn.OidnFilter;
 import net.time4tea.oidn.OidnImages;
-import org.bukkit.Bukkit;
 import se.llbit.chunky.PersistentSettings;
 import se.llbit.chunky.main.Chunky;
-import se.llbit.chunky.renderer.Postprocess;
 import se.llbit.chunky.renderer.RenderManager;
 import se.llbit.chunky.renderer.SnapshotControl;
 import se.llbit.chunky.renderer.scene.PathTracer;
@@ -35,6 +18,15 @@ import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
 import se.llbit.chunky.resources.BitmapImage;
 import se.llbit.chunky.resources.TexturePackLoader;
 import se.llbit.util.TaskTracker;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * A renderer that uses Chunky to render scenes locally.
@@ -76,26 +68,33 @@ public class ChunkyRenderer implements Renderer {
     defaultTexturepack = texturepack;
   }
 
-  private String getTexturepackPaths(File texturepack) {
-    if (defaultTexturepack != null) {
-      if (texturepack != null) {
-        return texturepack.getAbsolutePath() + File.pathSeparator + defaultTexturepack
-            .getAbsolutePath();
-      } else {
-        return defaultTexturepack.getAbsolutePath();
-      }
-    } else if (texturepack != null) {
-      return texturepack.getAbsolutePath();
+  private String getTexturepackPaths(File[] texturepacks) {
+    if (texturepacks == null || texturepacks.length == 0) {
+      return "";
     }
-    return "";
+    StringBuilder texturepackPaths = new StringBuilder();
+    for (File texturepack : texturepacks) {
+      if (texturepackPaths.length() > 0) {
+        texturepackPaths.append(File.pathSeparator);
+      }
+      texturepackPaths.append(texturepack.getAbsolutePath());
+    }
+
+    if (defaultTexturepack != null) {
+      if (texturepackPaths.length() > 0) {
+        texturepackPaths.append(File.pathSeparator);
+      }
+      texturepackPaths.append(defaultTexturepack.getAbsolutePath());
+    }
+    return texturepackPaths.toString();
   }
 
   @Override
-  public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File texturepack,
+  public CompletableFuture<BufferedImage> render(FileBufferRenderContext context, File[] texturepacks,
       Consumer<Scene> initializeScene) {
     CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-    String texturepackPaths = this.getTexturepackPaths(texturepack);
+    String texturepackPaths = this.getTexturepackPaths(texturepacks);
     if (!texturepackPaths.equals(previousTexturepacks)) {
       TexturePackLoader.loadTexturePacks(texturepackPaths, false);
       previousTexturepacks = texturepackPaths;
