@@ -80,6 +80,10 @@ public class ChunkyLogAdapter extends Receiver {
       // this is intended
       return true;
     }
+    if (message.startsWith("Unknown biome")) {
+      // don't spam the user about this
+      return true;
+    }
     return false;
   }
 }
