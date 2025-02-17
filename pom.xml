@@ -14,10 +14,9 @@
   </licenses>
 
   <properties>
-    <jdk.version>1.8</jdk.version>
+    <jdk.version>21</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <chunky.version>2.4.4-20221023.020557-1</chunky.version><!-- 2.4.4 but without biome warnings -->
   </properties>
 
   <repositories>
@@ -45,7 +44,7 @@
     <dependency>
       <groupId>se.llbit</groupId>
       <artifactId>chunky-core</artifactId>
-      <version>${chunky.version}</version>
+      <version>2.5.0-DEV.381.gf277ba6</version>
     </dependency>
     <dependency>
       <!-- dependency of chunky -->
@@ -56,7 +55,7 @@
     <dependency>
       <groupId>us.dynmap</groupId>
       <artifactId>DynmapCore</artifactId>
-      <version>3.4.0</version>
+      <version>3.7-beta-8</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -67,6 +66,12 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>us.dynmap</groupId>
+      <artifactId>DynmapCoreAPI</artifactId>
+      <version>3.7-beta-8</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
       <version>3.14.9</version>
@@ -74,12 +79,12 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.7</version>
+      <version>2.8.9</version>
     </dependency>
     <dependency>
       <groupId>net.time4tea</groupId>
       <artifactId>oidnjni</artifactId>
-      <version>0.1.04</version>
+      <version>0.1.13</version>
     </dependency>
     <dependency>
       <!-- dependency of oidnjni -->
@@ -99,10 +104,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.5.1</version>
+        <version>3.13.0</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>21</source>
+          <target>21</target>
         </configuration>
       </plugin>
       <plugin>

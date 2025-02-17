@@ -97,8 +97,8 @@ public class ChunkyMapTile extends HDMapTile {
                       .collect(Collectors.toSet());
               Bukkit.getLogger().info("loading " + chunks.size()+ " chunks");
               scene.setOctreeImplementation("PACKED");
-            scene.loadChunks(new TaskTracker((task, done, start, target) -> {
-              Bukkit.getLogger().info(task + " ("+done+"/"+target+")");
+            scene.loadChunks(new TaskTracker((task, done, start, target, elapsedTime) -> {
+              Bukkit.getLogger().info(task + " (" + done + "/" + target + ")");
             }), chunkyWorld, chunks);
             Bukkit.getLogger().info("loaded " + chunks.size()+ " chunks");
             scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);

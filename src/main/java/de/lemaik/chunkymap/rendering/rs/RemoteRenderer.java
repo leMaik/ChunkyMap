@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.world.ChunkPosition;
+import se.llbit.chunky.world.RegionPosition;
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
@@ -69,7 +70,7 @@ public class RemoteRenderer implements Renderer {
     }
   }
 
-  private File getRegionFile(Scene scene, ChunkPosition position) {
+  private File getRegionFile(Scene scene, RegionPosition position) {
     try {
       Field worldPath = Scene.class.getDeclaredField("worldPath");
       worldPath.setAccessible(true);
