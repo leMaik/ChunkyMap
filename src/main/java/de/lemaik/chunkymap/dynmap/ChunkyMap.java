@@ -3,6 +3,7 @@ package de.lemaik.chunkymap.dynmap;
 import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.local.ChunkyRenderer;
+import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
 import de.lemaik.chunkymap.util.MinecraftDownloader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,16 +15,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import org.bukkit.Bukkit;
 import org.dynmap.ConfigurationNode;
-import org.dynmap.DynmapChunk;
 import org.dynmap.DynmapCore;
 import org.dynmap.DynmapWorld;
 import org.dynmap.MapTile;
 import org.dynmap.MapType;
 import org.dynmap.hdmap.HDMap;
+import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
 import org.dynmap.utils.TileFlags;
 import se.llbit.chunky.renderer.scene.Scene;
@@ -41,33 +43,52 @@ public class ChunkyMap extends HDMap {
   private final Renderer renderer;
   private File defaultTexturepackPath;
   private File texturepackPath;
+  private File worldPath;
+  private final Object worldPathLock = new Object();
   private JsonObject templateScene;
-  private int chunkPadding;
+  private final int chunkPadding;
+  private final boolean requeueFailedTiles;
 
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
     cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
-    renderer = new ChunkyRenderer(
-        config.getInteger("samplesPerPixel", 100),
-        config.getBoolean("denoiser/enabled", false),
-        config.getInteger("denoiser/albedoSamplesPerPixel", 16),
-        config.getInteger("denoiser/normalSamplesPerPixel", 16),
-        config.getInteger("chunkyThreads", 2),
-        Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
-    );
+    if (config.getBoolean("chunkycloud/enabled", false)) {
+      renderer = new RemoteRenderer(config.getString("chunkycloud/apiKey", ""),
+          config.getInteger("samplesPerPixel", 100),
+          config.getString("texturepack", null),
+          config.getBoolean("chunkycloud/initializeLocally", true));
+      if (config.getString("chunkycloud/apiKey", "").isEmpty()) {
+        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
+            .warning("No ChunkyCloud API Key configured.");
+      }
+    } else {
+      renderer = new ChunkyRenderer(
+          config.getInteger("samplesPerPixel", 100),
+          config.getBoolean("denoiser/enabled", false),
+          config.getInteger("denoiser/albedoSamplesPerPixel", 16),
+          config.getInteger("denoiser/normalSamplesPerPixel", 16),
+          config.getInteger("chunkyThreads", 2),
+          Math.min(100, Math.max(0, config.getInteger("chunkyCpuLoad", 100)))
+      );
+    }
     chunkPadding = config.getInteger("chunkPadding", 0);
+    requeueFailedTiles = config.getBoolean("requeueFailedTiles", true);
 
     String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
     File texturepackPath = new File(
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(),
         texturepackVersion + ".jar");
-    if (!texturepackPath.exists()) {
+    if (texturepackPath.exists()) {
+      defaultTexturepackPath = texturepackPath;
+    } else {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
           .info("Downloading additional textures for Minecraft " + texturepackVersion);
-      try (Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get()) {
-        try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
-          sink.writeAll(response.body().source());
-        }
+      try (
+          Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get();
+          ResponseBody body = response.body();
+          BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))
+      ) {
+        sink.writeAll(body.source());
         defaultTexturepackPath = texturepackPath;
       } catch (IOException | ExecutionException | InterruptedException e) {
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
@@ -77,7 +98,7 @@ public class ChunkyMap extends HDMap {
     }
 
     if (config.containsKey("texturepack")) {
-      texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
+      this.texturepackPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
           .resolve(config.getString("texturepack"))
           .toFile();
     } else {
@@ -103,19 +124,11 @@ public class ChunkyMap extends HDMap {
             .log(Level.SEVERE, "Could not read the template scene.", e);
       }
     }
-
-    // texturepacks in chunky are static, so only load them once
-    if (defaultTexturepackPath != null) {
-      ChunkyRenderer.loadDefaultTexturepack(defaultTexturepackPath);
-    }
-    if (texturepackPath != null) {
-      ChunkyRenderer.loadTexturepack(texturepackPath);
-    }
   }
 
   @Override
   public void addMapTiles(List<MapTile> list, DynmapWorld world, int tx, int ty) {
-    list.add(new ChunkyMapTile(world, getPerspective(), this, tx, ty));
+    list.add(new ChunkyMapTile(world, getPerspective(), tx, ty, getBoostZoom()));
   }
 
   public List<TileFlags.TileCoord> getTileCoords(DynmapWorld world, int x, int y, int z) {
@@ -129,25 +142,24 @@ public class ChunkyMap extends HDMap {
 
   @Override
   public MapTile[] getAdjecentTiles(MapTile tile) {
+    return getAdjecentTilesOfTile(tile, getPerspective());
+  }
+
+  public static MapTile[] getAdjecentTilesOfTile(MapTile tile, HDPerspective perspective) {
     ChunkyMapTile t = (ChunkyMapTile) tile;
     DynmapWorld w = t.getDynmapWorld();
     int x = t.tileOrdinalX();
     int y = t.tileOrdinalY();
 
     return new MapTile[]{
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x, y - 1),
-        new ChunkyMapTile(w, getPerspective(), this, x + 1, y),
-        new ChunkyMapTile(w, getPerspective(), this, x, y + 1),
-        new ChunkyMapTile(w, getPerspective(), this, x - 1, y)};
-  }
-
-  @Override
-  public List<DynmapChunk> getRequiredChunks(MapTile mapTile) {
-    return getPerspective().getRequiredChunks(mapTile);
+        new ChunkyMapTile(w, perspective, x - 1, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x - 1, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x, y - 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x + 1, y, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x, y + 1, t.boostzoom),
+        new ChunkyMapTile(w, perspective, x - 1, y, t.boostzoom)};
   }
 
   @Override
@@ -187,9 +199,23 @@ public class ChunkyMap extends HDMap {
     return chunkPadding;
   }
 
+  public boolean getRequeueFailedTiles() {
+    return requeueFailedTiles;
+  }
+
   void applyTemplateScene(Scene scene) {
     if (this.templateScene != null) {
       scene.importFromJson(templateScene);
     }
+  }
+
+  File getWorldFolder(DynmapWorld world) {
+    if (worldPath == null) {
+      // Fixes a ConcurrentModificationException, see https://github.com/leMaik/ChunkyMap/issues/30
+      synchronized (worldPathLock) {
+        worldPath = Bukkit.getWorld(world.getRawName()).getWorldFolder();
+      }
+    }
+    return worldPath;
   }
 }

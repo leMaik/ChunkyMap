@@ -4,15 +4,18 @@ import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
+import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
+import java.awt.image.DataBufferInt;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.World.Environment;
-import org.dynmap.Client;
-import org.dynmap.DynmapChunk;
+import org.dynmap.Client.Tile;
 import org.dynmap.DynmapWorld;
 import org.dynmap.MapManager;
 import org.dynmap.MapTile;
@@ -25,29 +28,30 @@ import org.dynmap.markers.impl.MarkerAPIImpl;
 import org.dynmap.storage.MapStorage;
 import org.dynmap.storage.MapStorageTile;
 import org.dynmap.utils.MapChunkCache;
+import se.llbit.chunky.entity.PlayerEntity;
+import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.World;
 import se.llbit.chunky.world.World.LoggedWarnings;
+import se.llbit.util.ProgressListener;
+import se.llbit.util.TaskTracker;
 
 public class ChunkyMapTile extends HDMapTile {
 
-  private final ChunkyMap map;
-
-  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, ChunkyMap map, int tx,
-      int ty) {
-    super(world, perspective, tx, ty, map.getBoostZoom());
-    this.map = map;
+  public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, int tx, int ty,
+      int boostzoom) {
+    super(world, perspective, tx, ty, boostzoom);
   }
 
   public ChunkyMapTile(DynmapWorld world, String parm) throws Exception {
     // Do not remove this constructor! It is used by Dynmap to de-serialize tiles from the queue.
     // The serialization happens in the inherited saveTileData() method.
     super(world, parm);
-    map = (ChunkyMap) world.maps.stream().filter(m -> m instanceof ChunkyMap).findFirst().get();
   }
 
   @Override
-  public boolean render(MapChunkCache mapChunkCache, String s) {
+  public boolean render(MapChunkCache mapChunkCache, String mapName) {
+    final long startTimestamp = System.currentTimeMillis();
     IsoHDPerspective perspective = (IsoHDPerspective) this.perspective;
 
     final int scaled = (boostzoom > 0 && MarkerAPIImpl
@@ -55,6 +59,11 @@ public class ChunkyMapTile extends HDMapTile {
             128.0D)) ? boostzoom : 0;
 
     // Mark the tiles we're going to render as validated
+    ChunkyMap map = (ChunkyMap) world.maps.stream()
+        .filter(m -> m instanceof ChunkyMap && (mapName == null || m.getName().equals(mapName))
+            && ((ChunkyMap) m).getPerspective() == perspective
+            && ((ChunkyMap) m).getBoostZoom() == boostzoom)
+        .findFirst().get();
     MapTypeState mts = world.getMapState(map);
     if (mts != null) {
       mts.validateTile(tx, ty);
@@ -66,7 +75,7 @@ public class ChunkyMapTile extends HDMapTile {
       renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
       renderer.render(context, map.getTexturepackPath(), (scene) -> {
         org.bukkit.World bukkitWorld = Bukkit.getWorld(world.getRawName());
-        World chunkyWorld = World.loadWorld(bukkitWorld.getWorldFolder(),
+        World chunkyWorld = World.loadWorld(map.getWorldFolder(world),
             getChunkyDimension(bukkitWorld.getEnvironment()), LoggedWarnings.SILENT);
         // Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
         map.applyTemplateScene(scene);
@@ -80,28 +89,88 @@ public class ChunkyMapTile extends HDMapTile {
         map.cameraAdapter.apply(scene.camera(), tx, ty, map.getMapZoomOutLevels(),
             world.getExtraZoomOutLevels());
 
-        scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
-            perspective.getRequiredChunks(this).stream()
-                .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
-                .collect(Collectors.toList()));
+        if (renderer instanceof RemoteRenderer) {
+          if (((RemoteRenderer) renderer).shouldInitializeLocally()) {
+            scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
+                perspective.getRequiredChunks(this).stream()
+                    .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                    .collect(Collectors.toSet()));
+            scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
+            try {
+              scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
+            } catch (IOException e) {
+              throw new RuntimeException("Could not save scene", e);
+            }
+          } else {
+            try {
+              Field chunks = Scene.class.getDeclaredField("chunks");
+              chunks.setAccessible(true);
+              Collection<ChunkPosition> chunksList = (Collection<ChunkPosition>) chunks.get(scene);
+              chunksList.clear();
+              chunksList.addAll(perspective.getRequiredChunks(this).stream()
+                  .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                  .collect(Collectors.toSet()));
+            } catch (ReflectiveOperationException e) {
+              throw new RuntimeException("Could not set chunks", e);
+            }
+            try {
+              Field worldPath = Scene.class.getDeclaredField("worldPath");
+              worldPath.setAccessible(true);
+              worldPath.set(scene, map.getWorldFolder(world).getAbsolutePath());
+              Field worldDimension = Scene.class.getDeclaredField("worldDimension");
+              worldDimension.setAccessible(true);
+              worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
+            } catch (ReflectiveOperationException e) {
+              throw new RuntimeException("Could not set world", e);
+            }
+            try {
+              scene.saveDescription(context.getSceneDescriptionOutputStream(scene.name));
+            } catch (IOException e) {
+              throw new RuntimeException("Could not save scene", e);
+            }
+          }
+        } else {
+          scene.loadChunks(SilentTaskTracker.INSTANCE, chunkyWorld,
+              perspective.getRequiredChunks(this).stream()
+                  .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
+                  .collect(Collectors.toSet()));
+        }
       }).thenApply((image) -> {
         MapStorage var52 = world.getMapStorage();
         MapStorageTile mtile = var52.getTile(world, map, tx, ty, 0, ImageVariant.STANDARD);
-        try {
+        MapManager mapManager = MapManager.mapman;
+        boolean tileUpdated = false;
+        if (mapManager != null) {
+          DataBufferInt dataBuffer = (DataBufferInt) image.getRaster().getDataBuffer();
+          int[] data = dataBuffer.getData();
+          long crc = MapStorage.calculateImageHashCode(data, 0, data.length);
           mtile.getWriteLock();
-          mtile.write(image.hashCode(), image);
-          MapManager.mapman.pushUpdate(getDynmapWorld(), new Client.Tile(mtile.getURI()));
-        } finally {
-          mtile.releaseWriteLock();
-          MapManager.mapman.updateStatistics(this, map.getPrefix(), true, true, false);
+          try {
+            if (!mtile.matchesHashCode(crc)) {
+              mtile.write(crc, image, startTimestamp);
+              mapManager.pushUpdate(getDynmapWorld(), new Tile(mtile.getURI()));
+              tileUpdated = true;
+            }
+          } finally {
+            mtile.releaseWriteLock();
+          }
+          mapManager.updateStatistics(this, map.getPrefix(), true, true, false);
         }
-        return true;
+        return tileUpdated;
       }).get();
       return true;
     } catch (Exception e) {
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .log(Level.WARNING, "Rendering tile failed", e);
+          .log(Level.WARNING, "Rendering tile " + tx + "_" + ty + " failed", e);
+
+      if (map.getRequeueFailedTiles()) {
+        // Re-queue the failed tile
+        // Somewhat hacky but works surprisingly well
+        MapManager.mapman.tileQueue.push(this);
+      }
       return false;
+    } finally {
+      context.dispose();
     }
   }
 
@@ -128,13 +197,8 @@ public class ChunkyMapTile extends HDMapTile {
   }
 
   @Override
-  public List<DynmapChunk> getRequiredChunks() {
-    return map.getRequiredChunks(this);
-  }
-
-  @Override
   public MapTile[] getAdjecentTiles() {
-    return map.getAdjecentTiles(this);
+    return ChunkyMap.getAdjecentTilesOfTile(this, perspective);
   }
 
   public int hashCode() {
