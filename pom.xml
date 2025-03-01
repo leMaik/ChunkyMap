@@ -95,7 +95,7 @@
     <dependency>
       <groupId>de.lemaik</groupId>
       <artifactId>chunky-denoiser</artifactId>
-      <version>0.5.0</version>
+      <version>0.5.0-pre3</version>
     </dependency>
   </dependencies>
 
