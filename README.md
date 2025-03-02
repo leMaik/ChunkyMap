@@ -4,6 +4,14 @@ ChunkyMap is a map renderer for [Dynmap][dynmap] that uses [Chunky][chunky] to r
 
 ![banner](banner.png)
 
+## Compatibility matrix
+
+| ChunkyMap  | Minecraft       | Dynmap       | Chunky | Branch     |
+| ---------- | --------------- | ------------ | ------ | ---------- |
+| 2.7.0-pre1 | 1.21.4 or older | 3.7          | 2.5.0  | chunky-2.5 |
+| 2.6.0-pre4 | 1.19 or older   | 3.2 or later | 2.4.4  | chunky-2.4 |
+| 2.5.2      | 1.16 or older   | 2.3-3.0      | 2.3.0  | master     |
+
 ## Installation
 
 1. Download the latest jar from [the releases page][latest-release] and put it in your plugins directory.
