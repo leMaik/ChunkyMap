@@ -51,7 +51,7 @@ public class ChunkyMap extends HDMap {
 
   static {
     String bukkitVersion = Bukkit.getServer().getVersion();
-    String texturePackVersion = "1.19.2";
+    String texturePackVersion = "1.21.4";
     int start = bukkitVersion.indexOf("(MC:");
     if (start >= 0) {
       String minecraftVersion = bukkitVersion.substring(start + 5);
