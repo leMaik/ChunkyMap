@@ -86,7 +86,8 @@ public class ChunkyRenderer implements Renderer {
         renderManager.setCPULoad(cpuLoad);
 
         SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderManager);
-        initializeScene.accept(sceneManager.getScene());
+        sceneManager.withEditSceneProtected(initializeScene);
+        sceneManager.applySceneChanges();
 
         DenoiserSettings settings = new DenoiserSettings();
         settings.renderAlbedo.set(albedoTargetSpp > 0);

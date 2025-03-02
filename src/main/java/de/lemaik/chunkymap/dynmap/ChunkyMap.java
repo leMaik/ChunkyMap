@@ -128,17 +128,23 @@ public class ChunkyMap extends HDMap {
     }
 
     if (config.containsKey("templateScene")) {
-      try (InputStream inputStream = new FileInputStream(
+      try (JsonParser parser = new JsonParser(new FileInputStream(
           Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
               .resolve(config.getString("templateScene"))
-              .toFile())) {
-        templateScene = new JsonParser(inputStream).parse().asObject();
+              .toFile()))) {
+        templateScene = parser.parse().asObject();
         templateScene.remove("world");
         templateScene.set("spp", new JsonNumber(0));
         templateScene.set("renderTime", new JsonNumber(0));
         templateScene.remove("chunkList");
         templateScene.remove("entities");
         templateScene.remove("actors");
+        templateScene.remove("yClipMin");
+        templateScene.remove("yMin");
+        templateScene.remove("yClipMax");
+        templateScene.remove("yMax");
+        templateScene.remove("fullWidth");
+        templateScene.remove("fullHeight");
       } catch (IOException | JsonParser.SyntaxError e) {
         ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
             .log(Level.SEVERE, "Could not read the template scene.", e);
