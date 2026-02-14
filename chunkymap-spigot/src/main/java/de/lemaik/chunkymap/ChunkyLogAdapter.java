@@ -1,4 +1,4 @@
-package de.lemaik.chunkymap.rendering.local;
+package de.lemaik.chunkymap;
 
 import se.llbit.log.Level;
 import se.llbit.log.Receiver;

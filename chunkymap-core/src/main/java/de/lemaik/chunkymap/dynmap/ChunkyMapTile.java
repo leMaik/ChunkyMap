@@ -52,7 +52,7 @@ public class ChunkyMapTile extends HDMapTile {
             128.0D)) ? boostzoom : 0;
 
     // Mark the tiles we're going to render as validated
-    ChunkyMap map = (ChunkyMap) world.maps.stream()
+    de.lemaik.chunkymap.dynmap.ChunkyMap map = (ChunkyMap) world.maps.stream()
         .filter(m -> m instanceof ChunkyMap && (mapName == null || m.getName().equals(mapName))
             && ((ChunkyMap) m).getPerspective() == perspective
             && ((ChunkyMap) m).getBoostZoom() == boostzoom)

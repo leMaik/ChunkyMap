@@ -20,7 +20,7 @@ import se.llbit.util.TaskTracker;
 
 public class RemoteRenderer implements Renderer {
 
-  private final ApiClient api;
+  private final de.lemaik.chunkymap.rendering.rs.ApiClient api;
   private final int samplesPerPixel;
   private final String texturepack;
   private final boolean initializeLocally;
