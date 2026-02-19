@@ -2,7 +2,7 @@ package de.lemaik.chunkymap.rendering.local;
 
 import de.lemaik.chunky.denoiser.DenoisedPathTracingRenderer;
 import de.lemaik.chunky.denoiser.DenoiserSettings;
-import de.lemaik.chunkymap.ChunkyMapPlugin;
+import de.lemaik.chunkymap.Platform;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.RenderException;
 import de.lemaik.chunkymap.rendering.Renderer;
@@ -18,6 +18,7 @@ import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
 import se.llbit.chunky.resources.ResourcePackLoader;
 import se.llbit.util.TaskTracker;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
@@ -58,7 +59,7 @@ public class ChunkyRenderer implements Renderer {
         this.cpuLoad = cpuLoad;
 
         PersistentSettings.changeSettingsDirectory(
-                new File(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(), "chunky"));
+                new File(Platform.getInstance().getDataFolder(), "chunky"));
         PersistentSettings.setLoadPlayers(false);
         PersistentSettings.setDisableDefaultTextures(true);
     }

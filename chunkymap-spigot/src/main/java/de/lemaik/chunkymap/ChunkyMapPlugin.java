@@ -19,7 +19,6 @@
 
 package de.lemaik.chunkymap;
 
-import de.lemaik.chunkymap.rendering.local.ChunkyLogAdapter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -39,6 +38,8 @@ public class ChunkyMapPlugin extends JavaPlugin {
   public void onLoad() {
     Log.setReceiver(new ChunkyLogAdapter(getLogger()), se.llbit.log.Level.ERROR,
         se.llbit.log.Level.WARNING, se.llbit.log.Level.INFO);
+
+    Platform.setInstance(new SpigotPlatform(this));
   }
 
   @Override

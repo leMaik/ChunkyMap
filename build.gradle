@@ -1,0 +1,19 @@
+plugins {
+    id "java"
+    id "maven-publish"
+}
+
+allprojects {
+    version = project.version
+    group = project.group
+}
+
+subprojects {
+    apply plugin: "java"
+
+    jar {
+        from("LICENSE") {
+            rename { "${it}_${project.base.archivesName.get()}" }
+        }
+    }
+}

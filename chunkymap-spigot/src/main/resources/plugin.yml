@@ -1,5 +1,6 @@
 name: ChunkyMap
 version: ${project.version}
 main: de.lemaik.chunkymap.ChunkyMapPlugin
+api-version: 1.20
 loadbefore: [dynmap]
 softdepend: [dynmap]

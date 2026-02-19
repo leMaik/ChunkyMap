@@ -1,0 +1,40 @@
+plugins {
+    id "com.gradleup.shadow" version "9.3.1"
+}
+
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/releases" }
+    maven { url "https://repo.wertarbyte.com" }
+}
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+    }
+}
+
+dependencies {
+    shadow(implementation "com.squareup.okhttp3:okhttp:4.12.0")
+    shadow(implementation(files("../lib/chunky-core-${project.chunky_version}.jar")))
+    shadow(implementation 'net.time4tea:oidnjni:0.1.13')
+    shadow(implementation "de.lemaik:chunky-denoiser:0.5.0-pre3")
+
+    implementation "com.google.code.gson:gson:2.13.2"
+
+    provided files("../lib/Dynmap-3.8-fabric-1.21.11.jar")
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    exclude "META-INF"
+
+    dependencies {
+        // Explicitly exclude fastutil (otherwise included from chunky-core)
+        // because it's already included in the Minecraft server jar.
+        exclude(dependency("it.unimi.dsi:fastutil:"))
+    }
+}

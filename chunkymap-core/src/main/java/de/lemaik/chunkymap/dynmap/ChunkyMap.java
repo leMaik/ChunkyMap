@@ -1,29 +1,15 @@
 package de.lemaik.chunkymap.dynmap;
 
-import de.lemaik.chunkymap.ChunkyMapPlugin;
+import de.lemaik.chunkymap.Platform;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.local.ChunkyRenderer;
 import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
 import de.lemaik.chunkymap.util.MinecraftDownloader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
-import org.bukkit.Bukkit;
-import org.dynmap.ConfigurationNode;
-import org.dynmap.DynmapCore;
-import org.dynmap.DynmapWorld;
-import org.dynmap.MapTile;
-import org.dynmap.MapType;
+import org.dynmap.*;
 import org.dynmap.hdmap.HDMap;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -31,13 +17,23 @@ import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.json.JsonNumber;
 import se.llbit.json.JsonObject;
 import se.llbit.json.JsonParser;
+import se.llbit.log.Log;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * A map that uses the RenderService for rendering the tiles.
  */
 public class ChunkyMap extends HDMap {
 
-  private static final String DEFAULT_TEXTUREPACK_VERSION;
+  private static final String DEFAULT_TEXTUREPACK_VERSION = Platform.getInstance().getMinecraftVersion();
   public final DynmapCameraAdapter cameraAdapter;
   private final Renderer renderer;
   private File defaultTexturepackPath;
@@ -48,21 +44,6 @@ public class ChunkyMap extends HDMap {
   private final int chunkPadding;
   private final boolean requeueFailedTiles;
 
-  static {
-    String bukkitVersion = Bukkit.getServer().getVersion();
-    String texturePackVersion = "1.21.4";
-    int start = bukkitVersion.indexOf("(MC:");
-    if (start >= 0) {
-      String minecraftVersion = bukkitVersion.substring(start + 5);
-      start = minecraftVersion.indexOf(")");
-      if(start >= 0) {
-        minecraftVersion = minecraftVersion.substring(0, start).trim();
-        texturePackVersion = minecraftVersion;
-      }
-    }
-    DEFAULT_TEXTUREPACK_VERSION = texturePackVersion;
-  }
-
   public ChunkyMap(DynmapCore dynmap, ConfigurationNode config) {
     super(dynmap, config);
     cameraAdapter = new DynmapCameraAdapter((IsoHDPerspective) getPerspective());
@@ -72,8 +53,7 @@ public class ChunkyMap extends HDMap {
           config.getString("texturepack", null),
           config.getBoolean("chunkycloud/initializeLocally", true));
       if (config.getString("chunkycloud/apiKey", "").isEmpty()) {
-        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-            .warning("No ChunkyCloud API Key configured.");
+        Log.warn("No ChunkyCloud API Key configured.");
       }
     } else {
       renderer = new ChunkyRenderer(
@@ -89,14 +69,11 @@ public class ChunkyMap extends HDMap {
     requeueFailedTiles = config.getBoolean("requeueFailedTiles", true);
 
     String texturepackVersion = config.getString("texturepackVersion", DEFAULT_TEXTUREPACK_VERSION);
-    File texturepackPath = new File(
-        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getDataFolder(),
-        texturepackVersion + ".jar");
+    File texturepackPath = new File(Platform.getInstance().getDataFolder(), texturepackVersion + ".jar");
     if (texturepackPath.exists()) {
       defaultTexturepackPath = texturepackPath;
     } else {
-      ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .info("Downloading additional textures for Minecraft " + texturepackVersion);
+      Log.info("Downloading additional textures for Minecraft " + texturepackVersion);
       try (
           Response response = MinecraftDownloader.downloadMinecraft(texturepackVersion).get();
           ResponseBody body = response.body();
@@ -105,13 +82,11 @@ public class ChunkyMap extends HDMap {
         sink.writeAll(body.source());
         defaultTexturepackPath = texturepackPath;
       } catch (IOException | ExecutionException | InterruptedException e) {
-        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-            .log(Level.SEVERE,
-                "Downloading the textures failed, your Chunky dynmap might look bad!", e);
+        Log.error("Downloading the textures failed, your Chunky dynmap might look bad!", e);
       }
     }
 
-    Path dynmapDataPath = Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath();
+    Path dynmapDataPath = Platform.getInstance().getDynmapDataFolder().toPath();
     if (config.containsKey("resourcepacks")) {
       this.resourcepackPaths = config.getList("resourcepacks").stream()
           .map(path -> dynmapDataPath.resolve(path.toString()).toFile()).toArray(File[]::new);
@@ -121,14 +96,13 @@ public class ChunkyMap extends HDMap {
               .toFile() };
     } else {
       this.resourcepackPaths = new File[0];
-      ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .info("No resourcepacks specified for a map that is rendered with Chunky. " +
+      Log.info("No resourcepacks specified for a map that is rendered with Chunky. " +
               "The Minecraft " + texturepackVersion + " textures will be used.");
     }
 
     if (config.containsKey("templateScene")) {
       try (JsonParser parser = new JsonParser(new FileInputStream(
-          Bukkit.getPluginManager().getPlugin("dynmap").getDataFolder().toPath()
+              dynmapDataPath
               .resolve(config.getString("templateScene"))
               .toFile()))) {
         templateScene = parser.parse().asObject();
@@ -145,8 +119,7 @@ public class ChunkyMap extends HDMap {
         templateScene.remove("fullWidth");
         templateScene.remove("fullHeight");
       } catch (IOException | JsonParser.SyntaxError e) {
-        ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-            .log(Level.SEVERE, "Could not read the template scene.", e);
+        Log.error("Could not read the template scene.", e);
       }
     }
   }
@@ -230,7 +203,7 @@ public class ChunkyMap extends HDMap {
     if (worldPath == null) {
       // Fixes a ConcurrentModificationException, see https://github.com/leMaik/ChunkyMap/issues/30
       synchronized (worldPathLock) {
-        worldPath = Bukkit.getWorld(world.getRawName()).getWorldFolder();
+        worldPath = new File(world.getRawName());
       }
     }
     return worldPath;

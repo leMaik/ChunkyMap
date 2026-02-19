@@ -1,21 +1,15 @@
 package de.lemaik.chunkymap.dynmap;
 
-import de.lemaik.chunkymap.ChunkyMapPlugin;
 import de.lemaik.chunkymap.rendering.FileBufferRenderContext;
 import de.lemaik.chunkymap.rendering.Renderer;
 import de.lemaik.chunkymap.rendering.SilentTaskTracker;
 import de.lemaik.chunkymap.rendering.rs.RemoteRenderer;
-import java.awt.image.DataBufferInt;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
-import org.bukkit.World.Environment;
-import org.dynmap.*;
 import org.dynmap.Client.Tile;
+import org.dynmap.DynmapWorld;
+import org.dynmap.MapManager;
+import org.dynmap.MapTile;
 import org.dynmap.MapType.ImageVariant;
+import org.dynmap.MapTypeState;
 import org.dynmap.hdmap.HDMapTile;
 import org.dynmap.hdmap.HDPerspective;
 import org.dynmap.hdmap.IsoHDPerspective;
@@ -28,8 +22,17 @@ import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.World;
 import se.llbit.chunky.world.World.LoggedWarnings;
+import se.llbit.log.Log;
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
+
+import java.awt.image.DataBufferInt;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ChunkyMapTile extends HDMapTile {
   public ChunkyMapTile(DynmapWorld world, HDPerspective perspective, int tx, int ty, int boostzoom, int tilescale) {
@@ -52,7 +55,7 @@ public class ChunkyMapTile extends HDMapTile {
             128.0D)) ? boostzoom : 0;
 
     // Mark the tiles we're going to render as validated
-    de.lemaik.chunkymap.dynmap.ChunkyMap map = (ChunkyMap) world.maps.stream()
+    ChunkyMap map = (ChunkyMap) world.maps.stream()
         .filter(m -> m instanceof ChunkyMap && (mapName == null || m.getName().equals(mapName))
             && ((ChunkyMap) m).getPerspective() == perspective
             && ((ChunkyMap) m).getBoostZoom() == boostzoom)
@@ -67,9 +70,8 @@ public class ChunkyMapTile extends HDMapTile {
       Renderer renderer = map.getRenderer();
       renderer.setDefaultTexturepack(map.getDefaultTexturepackPath());
       renderer.render(context, map.getResourcepackPaths(), (scene) -> {
-        org.bukkit.World bukkitWorld = Bukkit.getWorld(world.getRawName());
         World chunkyWorld = World.loadWorld(map.getWorldFolder(world),
-            getChunkyDimension(bukkitWorld.getEnvironment()), LoggedWarnings.SILENT);
+                getChunkyDimension(world.getEnvironment()), LoggedWarnings.SILENT);
         // Bukkit.getScheduler().runTask(ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class), Bukkit.getWorld(world.getRawName())::save);
         map.applyTemplateScene(scene);
         scene.setName(tx + "_" + ty);
@@ -95,12 +97,12 @@ public class ChunkyMapTile extends HDMapTile {
               Set<ChunkPosition> chunks = perspective.getRequiredChunks(this).stream()
                       .flatMap(c -> getChunksAround(c.x, c.z, map.getChunkPadding()).stream())
                       .collect(Collectors.toSet());
-              Bukkit.getLogger().info("loading " + chunks.size()+ " chunks");
+            Log.info("loading " + chunks.size() + " chunks");
               scene.setOctreeImplementation("PACKED");
             scene.loadChunks(new TaskTracker((task, done, start, target, elapsedTime) -> {
-              Bukkit.getLogger().info(task + " (" + done + "/" + target + ")");
+              Log.info(task + " (" + done + "/" + target + ")");
             }), chunkyWorld, chunks);
-            Bukkit.getLogger().info("loaded " + chunks.size()+ " chunks");
+            Log.info("loaded " + chunks.size() + " chunks");
             scene.getActors().removeIf(actor -> actor instanceof PlayerEntity);
             try {
               scene.saveScene(context, new TaskTracker(ProgressListener.NONE));
@@ -125,7 +127,7 @@ public class ChunkyMapTile extends HDMapTile {
               worldPath.set(scene, map.getWorldFolder(world).getAbsolutePath());
               Field worldDimension = Scene.class.getDeclaredField("worldDimension");
               worldDimension.setAccessible(true);
-              worldDimension.setInt(scene, bukkitWorld.getEnvironment().getId());
+              worldDimension.setInt(scene, getDimensionId(world.getEnvironment()));
             } catch (ReflectiveOperationException e) {
               throw new RuntimeException("Could not set world", e);
             }
@@ -166,8 +168,7 @@ public class ChunkyMapTile extends HDMapTile {
       }).get();
       return true;
     } catch (Exception e) {
-      ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .log(Level.WARNING, "Rendering tile " + tx + "_" + ty + " failed", e);
+      Log.warn("Rendering tile " + tx + "_" + ty + " failed", e);
 
       if (map.getRequeueFailedTiles()) {
         // Re-queue the failed tile
@@ -180,15 +181,28 @@ public class ChunkyMapTile extends HDMapTile {
     }
   }
 
-  private static int getChunkyDimension(Environment environment) {
+  private static int getChunkyDimension(String environment) {
     switch (environment) {
-      case NETHER:
+      case "nether":
         return World.NETHER_DIMENSION;
-      case THE_END:
+      case "the_end":
         return World.END_DIMENSION;
-      case NORMAL:
+      case "normal":
       default:
         return World.OVERWORLD_DIMENSION;
+    }
+  }
+
+  private static int getDimensionId(String environment) {
+    switch (environment) {
+      case "nether":
+        return -1;
+      case "the_end":
+        return 1;
+      case "normal":
+        return 0;
+      default:
+        return -999;
     }
   }
 
@@ -214,7 +228,7 @@ public class ChunkyMapTile extends HDMapTile {
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof ChunkyMapTile&& ((ChunkyMapTile) o).tx == this.tx && ((ChunkyMapTile) o).ty == this.ty && this.perspective == ((ChunkyMapTile) o).perspective && ((ChunkyMapTile) o).world == this.world && ((ChunkyMapTile) o).boostzoom == this.boostzoom;
+    return o instanceof ChunkyMapTile && ((ChunkyMapTile) o).tx == this.tx && ((ChunkyMapTile) o).ty == this.ty && this.perspective == ((ChunkyMapTile) o).perspective && ((ChunkyMapTile) o).world == this.world && ((ChunkyMapTile) o).boostzoom == this.boostzoom;
   }
 
   @Override
