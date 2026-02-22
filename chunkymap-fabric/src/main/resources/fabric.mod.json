@@ -10,7 +10,7 @@
 		"sources": "https://github.com/leMaik/ChunkyMap"
 	},
 	"license": "GPL v3",
-	"icon": "rs-map-icon.png",
+	"icon": "assets/chunkymap/rs-map-icon.png",
 	"environment": "server",
 	"entrypoints": {
 		"main": ["de.lemaik.chunkymap.ChunkyMapMod"]
