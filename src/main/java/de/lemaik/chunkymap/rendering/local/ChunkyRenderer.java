@@ -24,6 +24,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -72,7 +73,8 @@ public class ChunkyRenderer implements Renderer {
                                                    Consumer<Scene> initializeScene) {
         CompletableFuture<BufferedImage> result = new CompletableFuture<>();
 
-        List<File> resourcepacks = new ArrayList<>(texturepacks.length);
+        List<File> resourcepacks = new ArrayList<>(texturepacks.length + 1);
+        Collections.addAll(resourcepacks, texturepacks);
         if (defaultTexturepack != null) {
             resourcepacks.add(defaultTexturepack);
         }
