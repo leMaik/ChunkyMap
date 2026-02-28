@@ -19,13 +19,14 @@ sourceSets {
 
 dependencies {
     shadow(implementation "com.squareup.okhttp3:okhttp:4.12.0")
-    shadow(implementation(files("../lib/chunky-core-${project.chunky_version}.jar")))
+    shadow(implementation "se.llbit:chunky-core:${project.chunky_version}")
     shadow(implementation 'net.time4tea:oidnjni:0.1.13')
     shadow(implementation "de.lemaik:chunky-denoiser:0.5.0-pre3")
 
     implementation "com.google.code.gson:gson:2.13.2"
 
-    provided files("../lib/Dynmap-3.8-fabric-1.21.11.jar")
+    provided "us.dynmap:DynmapCore:3.8"
+    provided "us.dynmap:DynmapCoreAPI:3.8"
 }
 
 shadowJar {

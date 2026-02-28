@@ -12,7 +12,7 @@ repositories {
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
 
-    implementation files("../lib/chunky-core-${project.chunky_version}.jar")
+    implementation "se.llbit:chunky-core:${project.chunky_version}"
 
     shadow(implementation(project ":chunkymap-core"))
 }

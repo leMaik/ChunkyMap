@@ -32,7 +32,7 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	implementation files("../lib/chunky-core-${project.chunky_version}.jar")
+    implementation "se.llbit:chunky-core:${project.chunky_version}"
 
 	shadow(implementation(project ":chunkymap-core"))
 }
