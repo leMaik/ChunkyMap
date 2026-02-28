@@ -9,8 +9,7 @@ import se.llbit.log.Receiver;
  * known false-positive warnings.
  */
 public class ChunkyLogAdapter extends Receiver {
-
-    private Logger logger;
+    private final Logger logger;
 
     public ChunkyLogAdapter(Logger logger) {
         this.logger = logger;
@@ -19,6 +18,7 @@ public class ChunkyLogAdapter extends Receiver {
     @Override
     public void logEvent(Level level, String message) {
         if (this.shouldIgnoreMessage(level, message, null)) {
+            logger.debug(message);
             return;
         }
         switch (level) {
@@ -38,6 +38,7 @@ public class ChunkyLogAdapter extends Receiver {
     @Override
     public void logEvent(Level level, String message, Throwable thrown) {
         if (this.shouldIgnoreMessage(level, message, thrown)) {
+            logger.debug(message, thrown);
             return;
         }
         switch (level) {
@@ -57,6 +58,7 @@ public class ChunkyLogAdapter extends Receiver {
     @Override
     public void logEvent(Level level, Throwable thrown) {
         if (this.shouldIgnoreMessage(level, null, thrown)) {
+            logger.debug(thrown.getMessage(), thrown);
             return;
         }
         switch (level) {
@@ -82,6 +84,10 @@ public class ChunkyLogAdapter extends Receiver {
         }
         if (message.startsWith("Unknown biome")) {
             // don't spam the user about this
+            return true;
+        }
+        if (message.startsWith("Failed to load texture:")) {
+            // don't bother the user with armor texture loading errors
             return true;
         }
         return false;
