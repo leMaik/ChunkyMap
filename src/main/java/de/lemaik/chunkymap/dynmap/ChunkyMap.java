@@ -123,7 +123,7 @@ public class ChunkyMap extends HDMap {
     } else {
       this.resourcepackPaths = new File[0];
       ChunkyMapPlugin.getPlugin(ChunkyMapPlugin.class).getLogger()
-          .warning("You didn't specify a texturepack for a map that is rendered with Chunky. " +
+          .info("No resourcepacks specified for a map that is rendered with Chunky. " +
               "The Minecraft " + texturepackVersion + " textures will be used.");
     }
 
