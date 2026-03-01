@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "chunkymap",
+	"version": "${version}",
+	"name": "ChunkyMap",
+	"description": "Photorealistic Dynmap world map renderer using Chunky",
+	"authors": ["leMaik"],
+	"contact": {
+		"homepage": "https://github.com/leMaik/ChunkyMap",
+		"sources": "https://github.com/leMaik/ChunkyMap"
+	},
+	"license": "GPL v3",
+	"icon": "assets/chunkymap/rs-map-icon.png",
+	"environment": "server",
+	"entrypoints": {
+		"main": ["de.lemaik.chunkymap.ChunkyMapMod"]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"recommends": {
+		"dynmap": ">=3.8"
+	}
+}

@@ -1,0 +1,87 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'maven-publish'
+    id "com.gradleup.shadow" version "9.3.1"
+}
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { url "https://repo.wertarbyte.com" }
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "chunkymap" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    // To change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    implementation "se.llbit:chunky-core:${project.chunky_version}"
+
+    shadow(implementation(project ":chunkymap-core"))
+}
+
+processResources {
+    filesMatching("fabric.mod.json") {
+        expand project.properties
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    exclude "META-INF"
+
+    dependencies {
+        // Explicitly exclude fastutil (otherwise included from chunky-core)
+        // because it's already included in the Minecraft server jar.
+        exclude(dependency("it.unimi.dsi:fastutil:"))
+    }
+}
+
+remapJar {
+    dependsOn shadowJar
+    mustRunAfter shadowJar
+    inputFile = file(tasks.shadowJar.archiveFile)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// configure the maven publication
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+        // Notice: This block does NOT have the same function as the block in the top level.
+        // The repositories here will be used for publishing your artifact, not for
+        // retrieving dependencies.
+    }
+}

@@ -1,0 +1,29 @@
+plugins {
+    id "com.gradleup.shadow" version "9.3.1"
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+    maven { url "https://repo.wertarbyte.com" }
+}
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
+
+    implementation "se.llbit:chunky-core:${project.chunky_version}"
+
+    shadow(implementation(project ":chunkymap-core"))
+}
+
+processResources {
+    filesMatching("plugin.yml") {
+        expand project.properties
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    exclude "META-INF"
+}
