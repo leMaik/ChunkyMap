@@ -53,15 +53,6 @@ shadowJar {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 25
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
-}
-
 // configure the maven publication
 publishing {
     publications {
